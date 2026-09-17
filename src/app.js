@@ -99,7 +99,7 @@ function renderDetail(id) {
     <p id="scale-note" class="scale-note" ${state.multiplier === 1 ? 'hidden' : ''}>Ingredienslistan är omräknad. Mängder i stegtexten gäller 4 portioner. Använd fler formar vid behov; tillagningstiden blir inte automatiskt längre.</p>
     <section class="detail-section"><div class="section-title"><h2>Ingredienser</h2>${actionsButton('uncheck','Avmarkera allt',null,'plain')}</div><ul class="ingredient-list" id="ingredients">${detailIngredients(recipe)}</ul></section>
     <section class="detail-section"><div class="section-title"><h2>Gör så här</h2></div><ol class="step-list">${recipe.steps.map((step,index) => `<li class="step"><label><input class="check-input" type="checkbox" data-check="s-${index}" ${state.checks.has(`s-${index}`) ? 'checked' : ''} aria-label="Steg ${index+1} klart"><span><span class="step-number">STEG ${index+1}</span><span class="step-text">${esc(step)}</span></span></label></li>`).join('')}</ol></section>
-    <section class="notes-area"><h2>Egna anteckningar</h2><p class="small muted">Det lilla extra du vill komma ihåg till nästa gång</p><label class="sr-only" for="notes">Anteckningar</label><textarea id="notes" maxlength="10000" placeholder="Lite mer av det goda nästa gång?">${esc(recipe.notes)}</textarea><div class="notes-actions"><small id="notes-status">Ändringar ersätter tidigare text.</small><button class="primary" id="save-notes" data-action="save-notes" disabled>Spara anteckning</button></div><p class="error inline-error" id="notes-error" role="alert"></p></section>
+    <section class="notes-area"><h2>Egna anteckningar</h2><label class="sr-only" for="notes">Anteckningar</label><textarea id="notes" maxlength="10000" placeholder="Hur blev det? Skriv dina tankar här…">${esc(recipe.notes)}</textarea><div class="notes-actions"><small id="notes-status">Ändringar ersätter tidigare text.</small><button class="primary" id="save-notes" data-action="save-notes" disabled>Spara anteckning</button></div><p class="error inline-error" id="notes-error" role="alert"></p></section>
     ${recipe.is_mine === false ? '<p class="small muted public-note">Det här receptet är publicerat av en annan användare.</p>' : `<div class="delete-row">${actionsButton('delete','Ta bort recept','trash','plain danger',`data-id="${esc(id)}"`)}</div>`}`, true);
   loadImages();
 }
@@ -317,7 +317,7 @@ function showLogin(error = '') {
 }
 async function startLibrary() {
   app.innerHTML = '<div class="loading-screen" role="status">Hämtar din receptbok…</div>';
-  try {const {recipes,tags} = await repository.load(); state.recipes = recipes; state.tags = tags; state.loaded = true; routeFromHash();}
+  try {const {recipes,tags} = await repository.load(); state.recipes = recipes.map(recipe => ({...recipe, protein: recipe.protein === 'Övrigt' ? '' : recipe.protein, carb: recipe.carb === 'Övrigt' ? '' : recipe.carb})); state.tags = tags; state.loaded = true; routeFromHash();}
   catch(error) {state.loaded = false; app.innerHTML = `<main class="login-shell"><section class="login-card"><h1>Kunde inte öppna receptboken</h1><p class="error">${esc(readableError(error))}</p>${actionsButton('retry','Försök igen','refresh','primary')}${actionsButton('logout','Till inloggning','arrow','plain')}</section></main>`;}
 }
 async function init() {
