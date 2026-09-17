@@ -78,7 +78,7 @@ function renderCollection() {
 }
 function renderHome() {
   state.detail = null;
-  app.innerHTML = chrome(`<div class="page-heading"><div><p class="eyebrow">Din personliga receptbok</p><h1>${state.route === 'favorites' ? 'Dina favoriter' : 'Vad ska vi laga?'}</h1><p>${state.route === 'favorites' ? 'Rätterna du gärna återkommer till.' : 'Lite mindre funderande. Lite mer matglädje.'}</p></div></div>
+  app.innerHTML = chrome(`<div class="page-heading"><div><h1>${state.route === 'favorites' ? 'Dina favoriter' : 'Vad ska vi laga?'}</h1>${state.route === 'favorites' ? '<p>Rätterna du gärna återkommer till.</p>' : ''}</div></div>
     ${renderFilters()}<div class="collection-header"><h2>${state.route === 'favorites' ? 'Favoritrecept' : 'Mina recept'}<span id="recipe-count" class="count"></span></h2><button class="circle primary" data-action="new" aria-label="Lägg till recept">${icon('plus')}</button></div><section id="collection" class="recipes-grid" aria-label="Recept"></section>`);
   renderCollection();
 }
