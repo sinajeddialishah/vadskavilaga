@@ -35,7 +35,7 @@ function actionsButton(action, text, iconName, className = '', extra = '') {
 function chrome(content, detail = false) {
   return `${repository.isDemo ? '<div class="demo-banner">Förhandsvisning · Ändringar sparas inte när sidan laddas om. Google-inloggning kopplas in före användning.</div>' : ''}
     <div id="offline" class="offline-banner" ${navigator.onLine ? 'hidden' : ''}>Du är offline. Anslut till internet för att hämta och spara recept.</div>
-    <header class="topbar"><div class="wordmark"><span class="logo">${icon('book')}</span>Vad ska vi laga?</div><span class="top-caption">Din egen lilla receptbok</span></header>
+    <header class="topbar"><div class="wordmark"><span class="logo">${icon('book')}</span>Vad ska vi laga?</div></header>
     <main class="shell ${detail ? 'detail-shell' : ''}" id="main">${content}</main>
     <nav class="bottom-nav" aria-label="Huvudmeny">${[['recipes','book','Recept'],['favorites','heart','Favoriter'],['settings','settings','Inställningar']].map(([route, name, text]) => `<button class="nav-item ${state.route === route || (state.route === 'detail' && route === 'recipes') ? 'active' : ''}" data-action="nav" data-route="${route}" ${state.route === route ? 'aria-current="page"' : ''}>${icon(name)}<span>${text}</span></button>`).join('')}</nav>`;
 }
