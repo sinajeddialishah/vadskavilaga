@@ -40,7 +40,13 @@ export const repository = {
     demoRecipes = [{...structuredClone(SEED_RECIPE), is_public: true, is_mine: true}]; demoTags = [...DEFAULT_TAGS];
   },
   async load() {
-    if (demo) return {recipes: structuredClone(demoRecipes), tags: [...demoTags]};
+    if (demo) {
+      if (db) {
+        const {data, error} = await db.rpc('list_public_preview_recipes');
+        if (!error && data?.length) return {recipes: data.map(recipe => ({...recipe, notes: '', favorite: false, is_public: true, is_mine: false, revision: 1})), tags: [...demoTags]};
+      }
+      return {recipes: structuredClone(demoRecipes), tags: [...demoTags]};
+    }
     if (!user) throw new Error('Logga in för att öppna dina recept.');
     const {error: initError} = await db.rpc('initialize_library'); check(initError);
     const [recipeResult, publicResult, settingsResult] = await Promise.all([
