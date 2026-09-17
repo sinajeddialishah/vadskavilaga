@@ -150,7 +150,8 @@ function closeModal(force = false) {
 }
 function showRandom() {
   const pool = currentRecipes(); const recipes = randomRecipes(pool).slice(0, 1);
-  showModal(`${modalHead('Något gott idag?')}<div class="confetti" aria-hidden="true">✦　•　✧　•　✦</div><p class="modal-description">${pool.length ? 'Dagens slumpade recept.' : 'Inga recept matchar. Prova att ändra dina filter.'}</p><div class="random-grid">${recipes.map(recipeCard).join('')}</div><div class="random-actions">${pool.length > 1 ? actionsButton('random','Slumpa igen','shuffle','primary') : actionsButton('close','Tillbaka till recepten','arrow','secondary')}</div>`, 'random');
+  const confetti = Array.from({length: 48}, (_, i) => `<span style="left:${(i * 37) % 96}%;top:${(i * 61) % 88}%;--delay:${i * 18}ms;--turn:${(i * 47) % 360}deg">${['✦','•','✧','◆'][i % 4]}</span>`).join('');
+  showModal(`${modalHead('Något gott idag?')}<div class="random-result"><div class="confetti" aria-hidden="true">${confetti}</div><div class="random-result-content"><p class="modal-description">${pool.length ? 'Dagens slumpade recept.' : 'Inga recept matchar. Prova att ändra dina filter.'}</p><div class="random-grid">${recipes.map(recipeCard).join('')}</div></div></div><div class="random-actions">${pool.length > 1 ? actionsButton('random','Slumpa igen','shuffle','primary') : actionsButton('close','Tillbaka till recepten','arrow','secondary')}</div>`, 'random');
   loadImages(modal);
 }
 function showTags() {
