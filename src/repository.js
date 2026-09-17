@@ -13,7 +13,7 @@ let demoTags = [...DEFAULT_TAGS];
 const photoUrls = new Map();
 function check(error) { if (error) throw error; }
 function dataOnly(recipe) {
-  return Object.fromEntries(['title','protein','carb','minutes','tags','ingredients','steps','notes','favorite','image_path','starter_image','source_url','source_label'].map(key => [key, recipe[key] ?? (['image_path','source_url','source_label'].includes(key) ? null : recipe[key])]));
+  return Object.fromEntries(['title','protein','carb','minutes','tags','ingredients','steps','notes','favorite','is_public','image_path','starter_image','source_url','source_label'].map(key => [key, recipe[key] ?? (['image_path','source_url','source_label'].includes(key) ? null : recipe[key])]));
 }
 export const repository = {
   get isDemo() { return demo; },
@@ -37,18 +37,22 @@ export const repository = {
   },
   startDemo() {
     demo = true; user = null;
-    demoRecipes = [structuredClone(SEED_RECIPE)]; demoTags = [...DEFAULT_TAGS];
+    demoRecipes = [{...structuredClone(SEED_RECIPE), is_public: true, is_mine: true}]; demoTags = [...DEFAULT_TAGS];
   },
   async load() {
     if (demo) return {recipes: structuredClone(demoRecipes), tags: [...demoTags]};
     if (!user) throw new Error('Logga in för att öppna dina recept.');
     const {error: initError} = await db.rpc('initialize_library'); check(initError);
-    const [recipeResult, settingsResult] = await Promise.all([
+    const [recipeResult, publicResult, settingsResult] = await Promise.all([
       db.from('recipes').select('*').order('created_at', {ascending: false}),
+      db.rpc('list_public_recipes'),
       db.from('profiles').select('tags').eq('user_id', user.id).single()
     ]);
-    check(recipeResult.error); check(settingsResult.error);
-    return {recipes: recipeResult.data, tags: settingsResult.data.tags};
+    check(recipeResult.error); check(publicResult.error); check(settingsResult.error);
+    const own = recipeResult.data.map(recipe => ({...recipe, is_mine: true}));
+    const ownIds = new Set(own.map(recipe => recipe.id));
+    const published = (publicResult.data || []).filter(recipe => !ownIds.has(recipe.id)).map(recipe => ({...recipe, notes: '', favorite: false, is_public: true, is_mine: false, revision: 1}));
+    return {recipes: [...own, ...published], tags: settingsResult.data.tags};
   },
   async save(recipe, isNew = false) {
     if (demo) {

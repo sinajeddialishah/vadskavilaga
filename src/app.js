@@ -48,8 +48,8 @@ function imageMarkup(recipe, detail = false) {
 }
 function recipeCard(recipe) {
   return `<article class="recipe-card"><button class="card-open" data-action="open" data-id="${esc(recipe.id)}" aria-label="Öppna ${esc(recipe.title)}">
-    ${imageMarkup(recipe)}<div class="card-body"><h3>${esc(recipe.title)}</h3><p class="card-meta">${icon('clock')} ${recipe.minutes} min <span>·</span> 4 portioner</p><div class="card-tags"><span class="badge">${esc(recipe.protein)}</span>${effectiveTags(recipe).slice(0,2).map(tag => `<span class="badge">${esc(tag)}</span>`).join('')}</div></div></button>
-    <button class="circle favorite-button ${recipe.favorite ? 'is-favorite' : ''}" data-action="favorite" data-id="${esc(recipe.id)}" aria-label="${recipe.favorite ? 'Ta bort' : 'Lägg till'} ${esc(recipe.title)} ${recipe.favorite ? 'från' : 'som'} favorit" aria-pressed="${recipe.favorite}">${icon('heart')}</button></article>`;
+    ${imageMarkup(recipe)}<div class="card-body"><h3>${esc(recipe.title)}</h3><p class="card-meta">${icon('clock')} ${recipe.minutes} min <span>·</span> 4 portioner</p><div class="card-tags"><span class="badge">${esc(recipe.protein)}</span>${recipe.is_public && recipe.is_mine === false ? '<span class="badge">Publikt</span>' : ''}${effectiveTags(recipe).slice(0,2).map(tag => `<span class="badge">${esc(tag)}</span>`).join('')}</div></div></button>
+    ${recipe.is_mine === false ? '' : `<button class="circle favorite-button ${recipe.favorite ? 'is-favorite' : ''}" data-action="favorite" data-id="${esc(recipe.id)}" aria-label="${recipe.favorite ? 'Ta bort' : 'Lägg till'} ${esc(recipe.title)} ${recipe.favorite ? 'från' : 'som'} favorit" aria-pressed="${recipe.favorite}">${icon('heart')}</button>`}</article>`;
 }
 async function loadImages(root = document) {
   for (const img of $$('[data-photo]', root)) {
@@ -90,17 +90,17 @@ function renderDetail(id) {
   if (!recipe) { navigate('recipes'); notify('Receptet finns inte längre.'); return; }
   if (state.detail !== id) {state.checks.clear(); state.multiplier = 1;}
   state.detail = id;
-  app.innerHTML = chrome(`<div class="detail-toolbar">${actionsButton('back','Recept','arrow','plain')}<div><button class="circle plain ${recipe.favorite ? 'is-favorite' : ''}" data-action="favorite" data-id="${esc(recipe.id)}" aria-label="${recipe.favorite ? 'Ta bort favorit' : 'Favoritmarkera'}" aria-pressed="${recipe.favorite}">${icon('heart')}</button>${actionsButton('edit','Redigera','edit','plain',`data-id="${esc(id)}"`)}</div></div>
+  app.innerHTML = chrome(`<div class="detail-toolbar">${actionsButton('back','Recept','arrow','plain')}<div>${recipe.is_mine === false ? '' : `<button class="circle plain ${recipe.favorite ? 'is-favorite' : ''}" data-action="favorite" data-id="${esc(recipe.id)}" aria-label="${recipe.favorite ? 'Ta bort favorit' : 'Favoritmarkera'}" aria-pressed="${recipe.favorite}">${icon('heart')}</button>${actionsButton('edit','Redigera','edit','plain',`data-id="${esc(id)}"`)}`}</div></div>
     ${recipe.image_path || recipe.starter_image ? `<div class="detail-hero">${imageMarkup(recipe,true)}</div>` : ''}
     <div class="card-tags"><span class="badge">${esc(recipe.protein)}</span><span class="badge">${esc(recipe.carb)}</span></div>
     <h1 class="detail-title">${esc(recipe.title)}</h1><div class="detail-meta"><span>${icon('clock')}${recipe.minutes} min</span><span>${icon('users')}<span id="serving-label">${state.multiplier * 4} portioner</span></span></div>
-    <div class="card-tags">${effectiveTags(recipe).map(tag => `<span class="badge">${esc(tag)}</span>`).join('')}</div>
+    <div class="card-tags">${recipe.is_public ? '<span class="badge">Publikt recept</span>' : ''}${effectiveTags(recipe).map(tag => `<span class="badge">${esc(tag)}</span>`).join('')}</div>
     <div class="portion-panel"><div><strong>Hur många äter?</strong><p>Grundreceptet är för 4 portioner.</p></div><div class="multipliers" aria-label="Antal portioner">${[1,2,3].map(m => `<button class="${state.multiplier === m ? 'active' : ''}" data-action="multiply" data-multiplier="${m}" aria-label="${m * 4} portioner" aria-pressed="${state.multiplier === m}">${m}×</button>`).join('')}</div></div>
     <p id="scale-note" class="scale-note" ${state.multiplier === 1 ? 'hidden' : ''}>Ingredienslistan är omräknad. Mängder i stegtexten gäller 4 portioner. Använd fler formar vid behov; tillagningstiden blir inte automatiskt längre.</p>
     <section class="detail-section"><div class="section-title"><h2>Ingredienser</h2>${actionsButton('uncheck','Avmarkera allt',null,'plain')}</div><ul class="ingredient-list" id="ingredients">${detailIngredients(recipe)}</ul></section>
     <section class="detail-section"><div class="section-title"><h2>Gör så här</h2></div><ol class="step-list">${recipe.steps.map((step,index) => `<li class="step"><label><input class="check-input" type="checkbox" data-check="s-${index}" ${state.checks.has(`s-${index}`) ? 'checked' : ''} aria-label="Steg ${index+1} klart"><span><span class="step-number">STEG ${index+1}</span><span class="step-text">${esc(step)}</span></span></label></li>`).join('')}</ol></section>
     <section class="notes-area"><h2>Egna anteckningar</h2><p class="small muted">Det lilla du vill komma ihåg till nästa gång.</p><label class="sr-only" for="notes">Anteckningar</label><textarea id="notes" maxlength="10000" placeholder="Lite mer av det goda nästa gång?">${esc(recipe.notes)}</textarea><div class="notes-actions"><small id="notes-status">Ändringar ersätter tidigare text.</small><button class="primary" id="save-notes" data-action="save-notes" disabled>Spara anteckning</button></div><p class="error inline-error" id="notes-error" role="alert"></p></section>
-    <div class="delete-row">${actionsButton('delete','Ta bort recept','trash','plain danger',`data-id="${esc(id)}"`)}</div>`, true);
+    ${recipe.is_mine === false ? '<p class="small muted public-note">Det här receptet är publicerat av en annan användare.</p>' : `<div class="delete-row">${actionsButton('delete','Ta bort recept','trash','plain danger',`data-id="${esc(id)}"`)}</div>`}`, true);
   loadImages();
 }
 function renderSettings() {
@@ -166,7 +166,7 @@ function showEditor(recipe) {
   if (state.notesDirty && !confirmLeaving()) return;
   editorRecipe = recipe ? structuredClone(recipe) : null;
   editorPhoto = null; removeImage = false; state.formDirty = false;
-  const r = recipe || {title:'', protein:'', carb:'', minutes:'', ingredients:[{amount:null,unit:'',name:''}], steps:[''], tags:[], notes:''};
+  const r = recipe || {title:'', protein:'', carb:'', minutes:'', ingredients:[{amount:null,unit:'',name:''}], steps:[''], tags:[], notes:'', is_public:false};
   showModal(`${modalHead(recipe ? 'Redigera recept' : 'Nytt recept')}<form id="recipe-form">
     <label class="field">Receptnamn<input name="title" value="${esc(r.title)}" placeholder="Vad vill du laga?" required maxlength="120"></label>
     <div class="two-fields"><label class="field">Protein<select name="protein" required><option value="">Välj protein</option>${PROTEINS.map(p => `<option ${r.protein === p ? 'selected' : ''}>${p}</option>`).join('')}</select></label><label class="field">Kolhydrat<select name="carb" required><option value="">Välj kolhydrat</option>${CARBS.map(p => `<option ${r.carb === p ? 'selected' : ''}>${p}</option>`).join('')}</select></label></div>
@@ -174,6 +174,7 @@ function showEditor(recipe) {
     <section class="form-section"><h3>Ingredienser för 4 portioner</h3><p class="hint">Mängderna räknas om för 8 och 12 portioner. Lämna mängden tom för till exempel lingon till servering.</p><div class="ingredient-labels"><span>Mängd</span><span>Enhet</span><span>Ingrediens</span></div><div id="ingredient-editors">${r.ingredients.map(ingredientEditor).join('')}</div><datalist id="units">${['g','kg','ml','dl','l','tsk','msk','krm','st','paket'].map(unit => `<option value="${unit}">`).join('')}</datalist>${actionsButton('add-ingredient','Lägg till ingrediens','plus','secondary')}</section>
     <section class="form-section"><h3>Gör så här</h3><div id="step-editors">${r.steps.map(stepEditor).join('')}</div>${actionsButton('add-step','Lägg till steg','plus','secondary')}</section>
     <section class="form-section"><h3>Taggar</h3><div class="form-tag-grid">${state.tags.filter(tag => tag !== 'Snabbt').map(tag => `<label class="tag-choice"><input type="checkbox" name="tags" value="${esc(tag)}" ${r.tags.includes(tag) ? 'checked' : ''}>${esc(tag)}</label>`).join('')}</div><p class="auto-tag" id="auto-tag">${r.minutes > 0 && r.minutes <= 30 ? '✓ Snabbt läggs till automatiskt.' : 'Snabbt läggs till automatiskt vid högst 30 minuter.'}</p></section>
+    <section class="form-section"><label class="tag-choice"><input type="checkbox" name="is_public" ${r.is_public ? 'checked' : ''}>Publicera receptet</label><p class="hint">Titel, ingredienser och steg kan ses av andra inloggade användare. Dina anteckningar och favoriter förblir privata.</p></section>
     <section class="form-section"><h3>Bild på maten <span class="small muted">· valfritt</span></h3><label class="photo-upload" for="photo-input">${icon('camera')}<span><strong>Välj ett eget foto</strong><small>En bild per recept. JPG, PNG eller WebP.</small></span></label><input id="photo-input" type="file" accept="image/*" class="sr-only"><img id="editor-photo" class="editor-photo" alt="Receptbild" ${r.image_path || r.starter_image ? '' : 'hidden'} ${r.starter_image && !r.image_path ? 'src="./flaskpannkaka.webp"' : ''}>${actionsButton('remove-photo','Ta bort bilden','trash','plain danger',`id="remove-photo" ${r.image_path || r.starter_image ? '' : 'hidden'}`)}</section>
     <section class="form-section"><label class="field">Egna anteckningar<textarea name="notes" rows="3" maxlength="10000" placeholder="Det du vill komma ihåg till nästa gång…">${esc(r.notes)}</textarea></label></section>
     <p id="form-error" class="error inline-error" role="alert"></p><div class="form-footer">${actionsButton('close','Avbryt',null,'plain')}<button class="primary" type="submit" id="save-recipe">${icon('check')}Spara recept</button></div></form>`, 'editor');
@@ -189,7 +190,7 @@ async function saveRecipe(form) {
   let newPath;
   try {
     const fields = new FormData(form);
-    let recipe = normaliseRecipe({...(editorRecipe || {id: crypto.randomUUID(), revision: 0, favorite:false, image_path:null, starter_image:false, source_url:null, source_label:null}), title: fields.get('title'), protein: fields.get('protein'), carb: fields.get('carb'), minutes: fields.get('minutes'), notes: fields.get('notes'), tags: fields.getAll('tags'),
+    let recipe = normaliseRecipe({...(editorRecipe || {id: crypto.randomUUID(), revision: 0, favorite:false, is_public:false, image_path:null, starter_image:false, source_url:null, source_label:null}), title: fields.get('title'), protein: fields.get('protein'), carb: fields.get('carb'), minutes: fields.get('minutes'), notes: fields.get('notes'), is_public: fields.get('is_public') === 'on', tags: fields.getAll('tags'),
       ingredients: $$('.ingredient-editor',form).map(row => ({amount: $('[data-field="amount"]',row).value, unit:$('[data-field="unit"]',row).value, name:$('[data-field="name"]',row).value})), steps: $$('.step-editor textarea',form).map(area => area.value)});
     if (editorPhoto) {newPath = await repository.uploadPhoto(editorPhoto, recipe.id); recipe.image_path = newPath; recipe.starter_image = false;}
     else if (removeImage) {recipe.image_path = null; recipe.starter_image = false;}
@@ -206,6 +207,7 @@ async function saveRecipe(form) {
 async function toggleFavorite(id, button) {
   if (state.busy) return;
   const recipe = state.recipes.find(r => r.id === id); if (!recipe) return;
+  if (recipe.is_mine === false) return;
   state.busy = true; button.disabled = true;
   try {
     const saved = await repository.save({...recipe, favorite: !recipe.favorite}); updateRecipe(saved);
@@ -218,6 +220,7 @@ async function toggleFavorite(id, button) {
 async function saveNotes() {
   if (state.busy) return;
   const recipe = state.recipes.find(r => r.id === state.detail);
+  if (recipe?.is_mine === false) return;
   const text = $('#notes').value; const button = $('#save-notes'); button.disabled = true; state.busy = true;
   $('#notes-error').textContent = '';
   try {const saved = await repository.save({...recipe, notes:text}); updateRecipe(saved); state.notesDirty = $('#notes').value !== text; $('#notes-status').textContent = repository.isDemo ? 'Sparat i förhandsvisningen.' : 'Anteckningen är sparad.';}
@@ -226,6 +229,7 @@ async function saveNotes() {
 }
 async function deleteRecipe(id) {
   const recipe = state.recipes.find(r => r.id === id);
+  if (recipe?.is_mine === false) return;
   if (!confirm(`Vill du ta bort ”${recipe.title}”? Receptet, bilden och anteckningen tas bort.`)) return;
   state.busy = true;
   try {await repository.remove(recipe); state.recipes = state.recipes.filter(r => r.id !== id); state.notesDirty = false; state.busy = false; navigate('recipes'); notify('Receptet är borttaget.');}
