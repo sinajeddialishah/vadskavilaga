@@ -52,7 +52,9 @@ export function normaliseRecipe(input) {
   if (!title || title.length > 120) throw new Error('Ange ett receptnamn på högst 120 tecken.');
   const minutes = Number(input.minutes);
   if (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440) throw new Error('Ange en tid mellan 1 och 1440 minuter.');
-  if (!PROTEINS.includes(input.protein) || !CARBS.includes(input.carb)) throw new Error('Välj protein och kolhydrat.');
+  const protein = input.protein ?? '';
+  const carb = input.carb ?? '';
+  if ((protein !== '' && !PROTEINS.includes(protein)) || (carb !== '' && !CARBS.includes(carb))) throw new Error('Välj en giltig kategori eller lämna fältet tomt.');
   const ingredients = input.ingredients.map(item => ({
     amount: item.amount === '' || item.amount === null ? null : Number(String(item.amount).replace(',', '.')),
     unit: String(item.unit || '').trim().slice(0, 24), name: String(item.name || '').trim().slice(0, 180)
@@ -61,5 +63,5 @@ export function normaliseRecipe(input) {
   if (ingredients.some(item => item.amount !== null && (!Number.isFinite(item.amount) || item.amount <= 0 || item.amount > 100000))) throw new Error('Ingrediensmängder ska vara positiva tal, eller lämnas tomma.');
   const steps = input.steps.map(step => String(step).trim()).filter(Boolean);
   if (!steps.length) throw new Error('Lägg till minst ett tillagningssteg.');
-  return {...input, title, minutes, ingredients, steps, tags: [...new Set(input.tags.filter(tag => tag !== 'Snabbt'))], notes: String(input.notes || '').slice(0, 10000)};
+  return {...input, protein, carb, title, minutes, ingredients, steps, tags: [...new Set(input.tags.filter(tag => tag !== 'Snabbt'))], notes: String(input.notes || '').slice(0, 10000)};
 }
