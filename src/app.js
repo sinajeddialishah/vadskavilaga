@@ -62,7 +62,7 @@ function tagIcon(tag) { return ({Snabbt: 'bolt', Billigt: 'coins', Matlådevänl
 function renderFilters() {
   const firstTags = ['Snabbt', 'Billigt', 'Matlådevänligt'];
   const extraTags = state.selectedTags.filter(tag => !firstTags.includes(tag));
-  return `<div class="toolbar"><div class="controls"><label class="search">${icon('search')}<span class="sr-only">Sök recept på namn</span><input id="search" type="search" value="${esc(state.query)}" placeholder="Vad ska vi laga?" autocomplete="off"></label>
+  return `<div class="toolbar"><div class="controls"><label class="search">${icon('search')}<span class="sr-only">Sök recept på namn</span><input id="search" type="search" value="${esc(state.query)}" placeholder="vad vill ni laga?" autocomplete="off"></label>
     <div class="filter-line"><div class="segment" aria-label="Filtrera på"><button data-action="mode" data-mode="all" class="${state.mode === 'all' ? 'active' : ''}" aria-pressed="${state.mode === 'all'}">Alla</button><button data-action="mode" data-mode="protein" class="${state.mode === 'protein' ? 'active' : ''}" aria-pressed="${state.mode === 'protein'}">Protein</button><button data-action="mode" data-mode="carb" class="${state.mode === 'carb' ? 'active' : ''}" aria-pressed="${state.mode === 'carb'}">Kolhydrat</button></div>
     ${state.mode !== 'all' ? `<label class="sr-only" for="category">Välj ${state.mode === 'protein' ? 'protein' : 'kolhydrat'}</label><select id="category"><option value="">${state.mode === 'protein' ? 'Alla proteiner' : 'Alla kolhydrater'}</option>${(state.mode === 'protein' ? PROTEINS : CARBS).map(item => `<option ${state.category === item ? 'selected' : ''}>${item}</option>`).join('')}</select>` : ''}</div>
     <div class="tag-line">${[...firstTags,...extraTags].map(tag => `<button class="chip ${state.selectedTags.includes(tag) ? 'active' : ''}" data-action="tag" data-tag="${esc(tag)}" aria-pressed="${state.selectedTags.includes(tag)}">${icon(tagIcon(tag))}${esc(tag)}</button>`).join('')}<button class="chip chip-more" data-action="tags">${icon('plus')} Fler taggar</button></div>
@@ -269,7 +269,12 @@ document.addEventListener('click', async event => {
     case 'remove-step': if ($$('.step-editor').length === 1) {notify('Receptet behöver minst ett steg.'); break;} button.closest('.step-editor').remove(); state.formDirty = true; renumberEditors(); break;
     case 'remove-photo': editorPhoto = null; removeImage = true; $('#editor-photo').hidden = true; $('#remove-photo').hidden = true; $('#photo-input').value = ''; state.formDirty = true; break;
     case 'login': button.disabled = true; try {await repository.login();} catch(error) {$('#login-error').textContent = readableError(error); button.disabled = false;} break;
-    case 'demo': repository.startDemo(); await startLibrary(); break;
+    case 'demo':
+      repository.startDemo();
+      history.replaceState(null, '', '#recept');
+      currentHash = '#recept';
+      await startLibrary();
+      break;
     case 'logout': if (confirmLeaving()) {try {await repository.logout(); state.loaded = false; state.recipes = []; state.query = ''; state.selectedTags = []; state.checks.clear(); showLogin();} catch(error) {notify(readableError(error));}} break;
     case 'retry': await startLibrary(); break;
     case 'install': if (installPrompt) {await installPrompt.prompt(); await installPrompt.userChoice; installPrompt = null; renderSettings();} break;
@@ -308,7 +313,7 @@ window.addEventListener('offline', () => {if ($('#offline')) $('#offline').hidde
 window.addEventListener('beforeinstallprompt', event => {event.preventDefault(); installPrompt = event; if (state.route === 'settings' && state.loaded) renderSettings();});
 
 function showLogin(error = '') {
-  app.innerHTML = `<main class="login-shell"><section class="login-card"><span class="logo">${icon('book')}</span><h1>Vad ska vi laga?</h1><p>Dina favoriter, dina anteckningar.<br>En egen receptbok, alltid nära till hands.</p>${configured ? '<button class="primary" data-action="login"><span class="google-mark">G</span>Fortsätt med Google</button>' : '<p class="setup-note">Kontokopplingen behöver aktiveras innan du kan logga in och spara egna recept.</p>'}<button class="secondary" data-action="demo">Prova förhandsvisningen</button><small>${configured ? 'Din samling är privat. Logga ut när du använder någon annans mobil.' : 'Förhandsvisningen sparar inte dina ändringar.'}</small><p id="login-error" class="error" role="alert">${esc(error)}</p></section></main>`;
+  app.innerHTML = `<main class="login-shell"><section class="login-card"><span class="logo">${icon('book')}</span><h1>Vad ska vi laga?</h1><p>Din receptbok, alltid nära till hands</p>${configured ? '<button class="primary" data-action="login"><span class="google-mark">G</span>Fortsätt med Google</button>' : '<p class="setup-note">Kontokopplingen behöver aktiveras innan du kan logga in och spara egna recept.</p>'}<button class="secondary" data-action="demo">Prova förhandsvisningen</button>${configured ? '' : '<small>Förhandsvisningen sparar inte dina ändringar.</small>'}<p id="login-error" class="error" role="alert">${esc(error)}</p></section></main>`;
 }
 async function startLibrary() {
   app.innerHTML = '<div class="loading-screen" role="status">Hämtar din receptbok…</div>';
