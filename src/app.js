@@ -149,8 +149,8 @@ function closeModal(force = false) {
   modal.close(); modal.innerHTML = ''; modalMode = '';
 }
 function showRandom() {
-  const pool = currentRecipes(); const recipes = randomRecipes(pool);
-  showModal(`${modalHead('Något gott idag?')}<p class="modal-description">${pool.length > 3 ? 'Tre förslag från recepten som matchar dina val.' : pool.length ? `Det finns ${pool.length} ${pool.length === 1 ? 'recept' : 'recept'} som matchar dina val.` : 'Inga recept matchar. Prova att ändra dina filter.'}</p><div class="random-grid">${recipes.map(recipeCard).join('')}</div><div class="random-actions">${pool.length > 3 ? actionsButton('random','Tre nya förslag','shuffle','primary') : actionsButton('close','Tillbaka till recepten','arrow','secondary')}</div>`, 'random');
+  const pool = currentRecipes(); const recipes = randomRecipes(pool).slice(0, 1);
+  showModal(`${modalHead('Något gott idag?')}<div class="confetti" aria-hidden="true">✦　•　✧　•　✦</div><p class="modal-description">${pool.length ? 'Dagens slumpade recept.' : 'Inga recept matchar. Prova att ändra dina filter.'}</p><div class="random-grid">${recipes.map(recipeCard).join('')}</div><div class="random-actions">${pool.length > 1 ? actionsButton('random','Slumpa igen','shuffle','primary') : actionsButton('close','Tillbaka till recepten','arrow','secondary')}</div>`, 'random');
   loadImages(modal);
 }
 function showTags() {
