@@ -313,7 +313,7 @@ window.addEventListener('offline', () => {if ($('#offline')) $('#offline').hidde
 window.addEventListener('beforeinstallprompt', event => {event.preventDefault(); installPrompt = event; if (state.route === 'settings' && state.loaded) renderSettings();});
 
 function showLogin(error = '') {
-  app.innerHTML = `<main class="login-shell"><section class="login-card"><span class="logo">${icon('book')}</span><h1>Vad ska vi laga?</h1><p>Din receptbok, alltid nära till hands</p>${configured ? '<button class="primary" data-action="login"><span class="google-mark">G</span>Fortsätt med Google</button>' : '<p class="setup-note">Kontokopplingen behöver aktiveras innan du kan logga in och spara egna recept.</p>'}<button class="secondary" data-action="demo">Prova förhandsvisningen</button>${configured ? '' : '<small>Förhandsvisningen sparar inte dina ändringar.</small>'}<p id="login-error" class="error" role="alert">${esc(error)}</p></section></main>`;
+  app.innerHTML = `<main class="login-shell"><section class="login-card"><span class="logo">${icon('book')}</span><h1>Vad ska vi laga?</h1><p>Din receptbok, alltid nära till hands</p>${configured ? '<button class="primary" data-action="login"><span class="google-mark">G</span>Logga in med ditt Googlekonto</button>' : '<p class="setup-note">Kontokopplingen behöver aktiveras innan du kan logga in och spara egna recept.</p>'}<button class="secondary" data-action="demo">Testa utan att logga in</button>${configured ? '' : '<small>Förhandsvisningen sparar inte dina ändringar.</small>'}<p id="login-error" class="error" role="alert">${esc(error)}</p></section></main>`;
 }
 async function startLibrary() {
   app.innerHTML = '<div class="loading-screen" role="status">Hämtar din receptbok…</div>';
