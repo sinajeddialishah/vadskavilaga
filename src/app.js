@@ -62,7 +62,7 @@ function tagIcon(tag) { return ({Snabbt: 'bolt', Billigt: 'coins', Matlådevänl
 function renderFilters() {
   const firstTags = ['Snabbt', 'Billigt', 'Matlådevänligt'];
   const extraTags = state.selectedTags.filter(tag => !firstTags.includes(tag));
-  return `<div class="toolbar"><div class="controls"><label class="search">${icon('search')}<span class="sr-only">Sök recept på namn</span><input id="search" type="search" value="${esc(state.query)}" placeholder="Sök recept" autocomplete="off"></label>
+  return `<div class="toolbar"><div class="controls"><label class="search">${icon('search')}<span class="sr-only">Sök recept på namn</span><input id="search" type="search" value="${esc(state.query)}" placeholder="Vad ska vi laga?" autocomplete="off"></label>
     <div class="filter-line"><div class="segment" aria-label="Filtrera på"><button data-action="mode" data-mode="all" class="${state.mode === 'all' ? 'active' : ''}" aria-pressed="${state.mode === 'all'}">Alla</button><button data-action="mode" data-mode="protein" class="${state.mode === 'protein' ? 'active' : ''}" aria-pressed="${state.mode === 'protein'}">Protein</button><button data-action="mode" data-mode="carb" class="${state.mode === 'carb' ? 'active' : ''}" aria-pressed="${state.mode === 'carb'}">Kolhydrat</button></div>
     ${state.mode !== 'all' ? `<label class="sr-only" for="category">Välj ${state.mode === 'protein' ? 'protein' : 'kolhydrat'}</label><select id="category"><option value="">${state.mode === 'protein' ? 'Alla proteiner' : 'Alla kolhydrater'}</option>${(state.mode === 'protein' ? PROTEINS : CARBS).map(item => `<option ${state.category === item ? 'selected' : ''}>${item}</option>`).join('')}</select>` : ''}</div>
     <div class="tag-line">${[...firstTags,...extraTags].map(tag => `<button class="chip ${state.selectedTags.includes(tag) ? 'active' : ''}" data-action="tag" data-tag="${esc(tag)}" aria-pressed="${state.selectedTags.includes(tag)}">${icon(tagIcon(tag))}${esc(tag)}</button>`).join('')}<button class="chip chip-more" data-action="tags">${icon('plus')} Fler taggar</button></div>
@@ -78,7 +78,7 @@ function renderCollection() {
 }
 function renderHome() {
   state.detail = null;
-  app.innerHTML = chrome(`<div class="page-heading"><div><h1>${state.route === 'favorites' ? 'Dina favoriter' : 'Vad ska vi laga?'}</h1>${state.route === 'favorites' ? '<p>Rätterna du gärna återkommer till.</p>' : ''}</div></div>
+  app.innerHTML = chrome(`${state.route === 'favorites' ? '<div class="page-heading"><div><h1>Dina favoriter</h1><p>Rätterna du gärna återkommer till.</p></div></div>' : ''}
     ${renderFilters()}<div class="collection-header"><h2>${state.route === 'favorites' ? 'Favoritrecept' : 'Mina recept'}<span id="recipe-count" class="count"></span></h2><button class="circle primary" data-action="new" aria-label="Lägg till recept">${icon('plus')}</button></div><section id="collection" class="recipes-grid" aria-label="Recept"></section>`);
   renderCollection();
 }
