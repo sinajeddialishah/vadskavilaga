@@ -68,7 +68,7 @@ function renderFilters() {
     <div class="tag-line">${[...firstTags,...extraTags].map(tag => `<button class="chip ${state.selectedTags.includes(tag) ? 'active' : ''}" data-action="tag" data-tag="${esc(tag)}" aria-pressed="${state.selectedTags.includes(tag)}">${icon(tagIcon(tag))}${esc(tag)}</button>`).join('')}<button class="chip chip-more" data-action="tags">${icon('plus')} Fler taggar</button></div>
     ${state.selectedTags.length > 1 ? '<p class="small muted" style="margin-top:10px">Alla valda taggar måste stämma.</p>' : ''}
     ${state.selectedTags.length || state.category || state.query ? '<button class="plain clear-filters" data-action="clear">Rensa filter</button>' : ''}</div>
-    <button class="primary random-button" data-action="random">${icon('shuffle')}Slumpa 3 recept</button></div>`;
+    <button class="primary random-button" data-action="random">${icon('shuffle')}Slumpa recept</button></div>`;
 }
 function renderCollection() {
   const recipes = currentRecipes();
