@@ -1,4 +1,5 @@
 /* Native fonts keep the interface quick, legible and independent of font services. */
+.random-prompt{max-width:280px}.random-prompt p{font-size:14px;color:var(--muted);margin-bottom:10px}.random-prompt .random-button{width:100%;margin-top:0}@media(max-width:800px){.random-prompt{max-width:none}.random-prompt p{text-align:center}}
 .random-result.random-result::before{animation-duration:15s;pointer-events:none}
 .random-shake{animation:recipe-shake .38s ease-in-out}
 @keyframes recipe-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px) rotate(-.5deg)}40%{transform:translateX(4px) rotate(.5deg)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
