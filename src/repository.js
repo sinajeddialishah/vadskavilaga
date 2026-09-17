@@ -94,7 +94,7 @@ export const repository = {
   async photoUrl(path) {
     if (!path) return null;
     if (photoUrls.has(path)) return photoUrls.get(path);
-    if (demo) return null;
+    if (demo) return db.storage.from('recipe-photos').getPublicUrl(path).data.publicUrl;
     const {data, error} = await db.storage.from('recipe-photos').download(path); check(error);
     const url = URL.createObjectURL(data); photoUrls.set(path, url); return url;
   },
