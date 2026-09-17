@@ -151,7 +151,7 @@ function closeModal(force = false) {
 function showRandom() {
   const reshuffle = modal.open && modalMode === 'random';
   const pool = currentRecipes(); const recipes = randomRecipes(pool).slice(0, 1);
-  showModal(`${modalHead('Något gott idag?')}<div class="random-result"><div class="confetti" aria-hidden="true"></div><div class="random-result-content">${pool.length ? '' : '<p class="modal-description">Inga recept matchar. Prova att ändra dina filter.</p>'}<div class="random-grid">${recipes.map(recipeCard).join('')}</div></div></div><div class="random-actions">${pool.length > 1 ? actionsButton('random','Slumpa igen','shuffle','primary') : actionsButton('close','Tillbaka till recepten','arrow','secondary')}</div>`, 'random');
+  showModal(`${modalHead('Grattis! Ni ska laga:')}<div class="random-result"><div class="confetti" aria-hidden="true"></div><div class="random-result-content">${pool.length ? '' : '<p class="modal-description">Inga recept matchar. Prova att ändra dina filter.</p>'}<div class="random-grid">${recipes.map(recipeCard).join('')}</div></div></div><div class="random-actions">${pool.length > 1 ? actionsButton('random','Slumpa igen','shuffle','primary') : actionsButton('close','Tillbaka till recepten','arrow','secondary')}</div>`, 'random');
   if (reshuffle) $('.random-grid', modal).classList.add('random-shake');
   loadImages(modal);
 }
