@@ -43,12 +43,12 @@ function currentRecipes() { return filterRecipes(state.recipes, {query: state.qu
 function imageMarkup(recipe, detail = false) {
   const cls = detail ? 'detail-photo' : 'card-image';
   if (recipe.image_path) return `<img class="${cls}" data-photo="${esc(recipe.image_path)}" alt="${esc(recipe.title)}" loading="lazy">`;
-  if (recipe.starter_image) return `<img class="${cls}" src="./flaskpannkaka.webp" alt="Exempelbild av fläskpannkaka med lingon" loading="lazy">`;
+  if (recipe.starter_image) return `<img class="${cls}" src="./flaskpannkaka.webp" alt="Fläskpannkaka med lingon" loading="lazy">`;
   return `<div class="card-placeholder">${icon('utensils')}<span class="small">${detail ? 'Ingen bild ännu' : 'Från din receptbok'}</span></div>`;
 }
 function recipeCard(recipe) {
   return `<article class="recipe-card"><button class="card-open" data-action="open" data-id="${esc(recipe.id)}" aria-label="Öppna ${esc(recipe.title)}">
-    ${imageMarkup(recipe)}<div class="card-body"><h3>${esc(recipe.title)}</h3><p class="card-meta">${icon('clock')} ${recipe.minutes} min <span>·</span> 4 portioner</p><div class="card-tags"><span class="badge">${esc(recipe.protein)}</span>${effectiveTags(recipe).slice(0,2).map(tag => `<span class="badge">${esc(tag)}</span>`).join('')}</div>${recipe.starter_image && !recipe.image_path ? '<p class="sample-label">AI-skapad exempelbild</p>' : ''}</div></button>
+    ${imageMarkup(recipe)}<div class="card-body"><h3>${esc(recipe.title)}</h3><p class="card-meta">${icon('clock')} ${recipe.minutes} min <span>·</span> 4 portioner</p><div class="card-tags"><span class="badge">${esc(recipe.protein)}</span>${effectiveTags(recipe).slice(0,2).map(tag => `<span class="badge">${esc(tag)}</span>`).join('')}</div></div></button>
     <button class="circle favorite-button ${recipe.favorite ? 'is-favorite' : ''}" data-action="favorite" data-id="${esc(recipe.id)}" aria-label="${recipe.favorite ? 'Ta bort' : 'Lägg till'} ${esc(recipe.title)} ${recipe.favorite ? 'från' : 'som'} favorit" aria-pressed="${recipe.favorite}">${icon('heart')}</button></article>`;
 }
 async function loadImages(root = document) {
@@ -95,13 +95,11 @@ function renderDetail(id) {
     <div class="card-tags"><span class="badge">${esc(recipe.protein)}</span><span class="badge">${esc(recipe.carb)}</span></div>
     <h1 class="detail-title">${esc(recipe.title)}</h1><div class="detail-meta"><span>${icon('clock')}${recipe.minutes} min</span><span>${icon('users')}<span id="serving-label">${state.multiplier * 4} portioner</span></span></div>
     <div class="card-tags">${effectiveTags(recipe).map(tag => `<span class="badge">${esc(tag)}</span>`).join('')}</div>
-    ${recipe.starter_image && !recipe.image_path ? '<p class="sample-label">AI-skapad exempelbild. Du kan byta till ditt eget foto.</p>' : ''}
     <div class="portion-panel"><div><strong>Hur många äter?</strong><p>Grundreceptet är för 4 portioner.</p></div><div class="multipliers" aria-label="Antal portioner">${[1,2,3].map(m => `<button class="${state.multiplier === m ? 'active' : ''}" data-action="multiply" data-multiplier="${m}" aria-label="${m * 4} portioner" aria-pressed="${state.multiplier === m}">${m}×</button>`).join('')}</div></div>
     <p id="scale-note" class="scale-note" ${state.multiplier === 1 ? 'hidden' : ''}>Ingredienslistan är omräknad. Mängder i stegtexten gäller 4 portioner. Använd fler formar vid behov; tillagningstiden blir inte automatiskt längre.</p>
     <section class="detail-section"><div class="section-title"><h2>Ingredienser</h2>${actionsButton('uncheck','Avmarkera allt',null,'plain')}</div><ul class="ingredient-list" id="ingredients">${detailIngredients(recipe)}</ul></section>
     <section class="detail-section"><div class="section-title"><h2>Gör så här</h2></div><ol class="step-list">${recipe.steps.map((step,index) => `<li class="step"><label><input class="check-input" type="checkbox" data-check="s-${index}" ${state.checks.has(`s-${index}`) ? 'checked' : ''} aria-label="Steg ${index+1} klart"><span><span class="step-number">STEG ${index+1}</span><span class="step-text">${esc(step)}</span></span></label></li>`).join('')}</ol></section>
     <section class="notes-area"><h2>Egna anteckningar</h2><p class="small muted">Det lilla du vill komma ihåg till nästa gång.</p><label class="sr-only" for="notes">Anteckningar</label><textarea id="notes" maxlength="10000" placeholder="Lite mer av det goda nästa gång?">${esc(recipe.notes)}</textarea><div class="notes-actions"><small id="notes-status">Ändringar ersätter tidigare text.</small><button class="primary" id="save-notes" data-action="save-notes" disabled>Spara anteckning</button></div><p class="error inline-error" id="notes-error" role="alert"></p></section>
-    ${recipe.source_url ? `<p class="source-link">${esc(recipe.source_label)} · <a href="${esc(recipe.source_url.startsWith('https://') ? recipe.source_url : '#')}" target="_blank" rel="noopener noreferrer">Originalrecept</a></p>` : ''}
     <div class="delete-row">${actionsButton('delete','Ta bort recept','trash','plain danger',`data-id="${esc(id)}"`)}</div>`, true);
   loadImages();
 }
