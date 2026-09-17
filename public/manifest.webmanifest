@@ -1,0 +1,16 @@
+{
+  "id": "./",
+  "name": "Vad ska vi laga?",
+  "short_name": "Vad ska vi laga?",
+  "lang": "sv",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7faf7",
+  "theme_color": "#165942",
+  "description": "Din privata receptbok med middagsinspiration.",
+  "icons": [
+    {"src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
