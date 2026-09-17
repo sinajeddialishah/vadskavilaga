@@ -35,7 +35,7 @@ function actionsButton(action, text, iconName, className = '', extra = '') {
 function chrome(content, detail = false) {
   return `${repository.isDemo ? '<div class="demo-banner">Förhandsvisning · Ändringar sparas inte när sidan laddas om. Google-inloggning kopplas in före användning.</div>' : ''}
     <div id="offline" class="offline-banner" ${navigator.onLine ? 'hidden' : ''}>Du är offline. Anslut till internet för att hämta och spara recept.</div>
-    <header class="topbar"><div class="wordmark"><span class="logo">${icon('book')}</span>Vad ska vi laga?</div></header>
+    <header class="topbar"><div class="wordmark"><span class="logo">${icon('book')}</span></div></header>
     <main class="shell ${detail ? 'detail-shell' : ''}" id="main">${content}</main>
     <nav class="bottom-nav" aria-label="Huvudmeny">${[['recipes','book','Recept'],['favorites','heart','Favoriter'],['settings','settings','Inställningar']].map(([route, name, text]) => `<button class="nav-item ${state.route === route || (state.route === 'detail' && route === 'recipes') ? 'active' : ''}" data-action="nav" data-route="${route}" ${state.route === route ? 'aria-current="page"' : ''}>${icon(name)}<span>${text}</span></button>`).join('')}</nav>`;
 }
@@ -150,7 +150,7 @@ function closeModal(force = false) {
 }
 function showRandom() {
   const pool = currentRecipes(); const recipes = randomRecipes(pool).slice(0, 1);
-  showModal(`${modalHead('Något gott idag?')}<div class="random-result"><div class="confetti" aria-hidden="true"></div><div class="random-result-content"><p class="modal-description">${pool.length ? 'Dagens slumpade recept.' : 'Inga recept matchar. Prova att ändra dina filter.'}</p><div class="random-grid">${recipes.map(recipeCard).join('')}</div></div></div><div class="random-actions">${pool.length > 1 ? actionsButton('random','Slumpa igen','shuffle','primary') : actionsButton('close','Tillbaka till recepten','arrow','secondary')}</div>`, 'random');
+  showModal(`${modalHead('Något gott idag?')}<div class="random-result"><div class="confetti" aria-hidden="true"></div><div class="random-result-content">${pool.length ? '' : '<p class="modal-description">Inga recept matchar. Prova att ändra dina filter.</p>'}<div class="random-grid">${recipes.map(recipeCard).join('')}</div></div></div><div class="random-actions">${pool.length > 1 ? actionsButton('random','Slumpa igen','shuffle','primary') : actionsButton('close','Tillbaka till recepten','arrow','secondary')}</div>`, 'random');
   loadImages(modal);
 }
 function showTags() {
