@@ -49,6 +49,7 @@ function imageMarkup(recipe, detail = false) {
 function recipeCard(recipe) {
   return `<article class="recipe-card"><button class="card-open" data-action="open" data-id="${esc(recipe.id)}" aria-label="Öppna ${esc(recipe.title)}">
     ${imageMarkup(recipe)}<div class="card-body"><h3>${esc(recipe.title)}</h3><p class="card-meta">${icon('clock')} ${recipe.minutes} min <span>·</span> 4 portioner</p><div class="card-tags">${recipe.protein ? `<span class="badge">${esc(recipe.protein)}</span>` : ''}${recipe.is_public && recipe.is_mine === false ? '<span class="badge">Publikt</span>' : ''}${effectiveTags(recipe).slice(0,2).map(tag => `<span class="badge">${esc(tag)}</span>`).join('')}</div></div></button>
+    <button type="button" class="circle card-share ${recipe.is_mine === false ? 'card-share-only' : ''}" data-action="share" data-id="${esc(recipe.id)}" aria-label="Dela ${esc(recipe.title)}" title="Dela recept">${icon('share')}</button>
     ${recipe.is_mine === false ? '' : `<button class="circle favorite-button ${recipe.favorite ? 'is-favorite' : ''}" data-action="favorite" data-id="${esc(recipe.id)}" aria-label="${recipe.favorite ? 'Ta bort' : 'Lägg till'} ${esc(recipe.title)} ${recipe.favorite ? 'från' : 'som'} favorit" aria-pressed="${recipe.favorite}">${icon('heart')}</button>`}</article>`;
 }
 async function loadImages(root = document) {
@@ -90,11 +91,10 @@ function renderDetail(id) {
   if (!recipe) { navigate('recipes'); notify('Receptet finns inte längre.'); return; }
   if (state.detail !== id) {state.checks.clear(); state.multiplier = 1;}
   state.detail = id;
-  app.innerHTML = chrome(`<div class="detail-toolbar">${actionsButton('back','Recept','arrow','plain')}<div>${recipe.is_mine === false ? '' : `<button class="circle plain ${recipe.favorite ? 'is-favorite' : ''}" data-action="favorite" data-id="${esc(recipe.id)}" aria-label="${recipe.favorite ? 'Ta bort favorit' : 'Favoritmarkera'}" aria-pressed="${recipe.favorite}">${icon('heart')}</button>${actionsButton('edit','Redigera','edit','plain',`data-id="${esc(id)}"`)}`}</div></div>
+  app.innerHTML = chrome(`<div class="detail-toolbar">${actionsButton('back','Recept','arrow','plain')}<div><button type="button" class="circle plain" data-action="share" data-id="${esc(id)}" aria-label="Dela recept" title="Dela recept">${icon('share')}</button>${recipe.is_mine === false ? '' : `<button class="circle plain ${recipe.favorite ? 'is-favorite' : ''}" data-action="favorite" data-id="${esc(recipe.id)}" aria-label="${recipe.favorite ? 'Ta bort favorit' : 'Favoritmarkera'}" aria-pressed="${recipe.favorite}">${icon('heart')}</button>${actionsButton('edit','Redigera','edit','plain',`data-id="${esc(id)}"`)}`}</div></div>
     ${recipe.image_path || recipe.starter_image ? `<div class="detail-hero">${imageMarkup(recipe,true)}</div>` : ''}
     <div class="card-tags">${recipe.protein ? `<span class="badge">${esc(recipe.protein)}</span>` : ''}${recipe.carb ? `<span class="badge">${esc(recipe.carb)}</span>` : ''}</div>
     <h1 class="detail-title">${esc(recipe.title)}</h1><div class="detail-meta"><span>${icon('clock')}${recipe.minutes} min</span><span>${icon('users')}<span id="serving-label">${state.multiplier * 4} portioner</span></span></div>
-    ${actionsButton('share','Dela recept',null,'secondary',`data-id="${esc(id)}"`)}
     <div class="card-tags">${recipe.is_public ? '<span class="badge">Publikt recept</span>' : ''}${effectiveTags(recipe).map(tag => `<span class="badge">${esc(tag)}</span>`).join('')}</div>
     <div class="portion-panel"><div><strong>Hur många äter?</strong><p>Grundreceptet är för 4 portioner.</p></div><div class="multipliers" aria-label="Antal portioner">${[1,2,3].map(m => `<button class="${state.multiplier === m ? 'active' : ''}" data-action="multiply" data-multiplier="${m}" aria-label="${m * 4} portioner" aria-pressed="${state.multiplier === m}">${m}×</button>`).join('')}</div></div>
     <p id="scale-note" class="scale-note" ${state.multiplier === 1 ? 'hidden' : ''}>Ingredienslistan är omräknad. Mängder i stegtexten gäller 4 portioner. Använd fler formar vid behov; tillagningstiden blir inte automatiskt längre.</p>
@@ -168,7 +168,7 @@ async function shareRecipe(id) {
     try {await navigator.share({title: recipe.title, url: link}); return;}
     catch (error) {if (error.name === 'AbortError') return;}
   }
-  try {await navigator.clipboard.writeText(link); notify('Receptlänken är kopierad!');}
+  try {await navigator.clipboard.writeText(link);}
   catch {
     showModal(`${modalHead('Dela recept')}<label class="field">Kopiera länken<input readonly value="${esc(link)}" aria-label="Receptlänk"></label>`, 'share');
     $('input', modal).select();
