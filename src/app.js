@@ -49,6 +49,7 @@ function imageMarkup(recipe, detail = false) {
 function recipeCard(recipe) {
   return `<article class="recipe-card"><button class="card-open" data-action="open" data-id="${esc(recipe.id)}" aria-label="Öppna ${esc(recipe.title)}">
     ${imageMarkup(recipe)}<div class="card-body"><h3>${esc(recipe.title)}</h3><p class="card-meta">${icon('clock')} ${recipe.minutes} min <span>·</span> 4 portioner</p><div class="card-tags">${recipe.protein ? `<span class="badge">${esc(recipe.protein)}</span>` : ''}${recipe.is_public && recipe.is_mine === false ? '<span class="badge">Publikt</span>' : ''}${effectiveTags(recipe).slice(0,2).map(tag => `<span class="badge">${esc(tag)}</span>`).join('')}</div></div></button>
+    <button type="button" class="circle card-share ${recipe.is_mine === false ? 'card-share-only' : ''}" data-action="share" data-id="${esc(recipe.id)}" aria-label="Dela ${esc(recipe.title)}" title="Dela recept">${icon('share')}</button>
     ${recipe.is_mine === false ? '' : `<button class="circle favorite-button ${recipe.favorite ? 'is-favorite' : ''}" data-action="favorite" data-id="${esc(recipe.id)}" aria-label="${recipe.favorite ? 'Ta bort' : 'Lägg till'} ${esc(recipe.title)} ${recipe.favorite ? 'från' : 'som'} favorit" aria-pressed="${recipe.favorite}">${icon('heart')}</button>`}</article>`;
 }
 async function loadImages(root = document) {
