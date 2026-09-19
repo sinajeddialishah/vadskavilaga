@@ -61,15 +61,7 @@ async function loadImages(root = document) {
 }
 function tagIcon(tag) { return ({Snabbt: 'bolt', Billigt: 'coins', Matlådevänligt: 'lunch'})[tag] || 'tag'; }
 function renderFilters() {
-  const firstTags = ['Snabbt', 'Billigt', 'Matlådevänligt'];
-  const extraTags = state.selectedTags.filter(tag => !firstTags.includes(tag));
-  return `<label class="search">${icon('search')}<span class="sr-only">Sök recept på namn</span><input id="search" type="search" value="${esc(state.query)}" placeholder="Vad vill du laga?" autocomplete="off"></label><hr class="recipe-divider"><div class="toolbar divided-toolbar"><div class="controls">
-    <div class="filter-line"><div class="segment" aria-label="Filtrera på"><button data-action="mode" data-mode="all" class="${state.mode === 'all' ? 'active' : ''}" aria-pressed="${state.mode === 'all'}">Alla</button><button data-action="mode" data-mode="protein" class="${state.mode === 'protein' ? 'active' : ''}" aria-pressed="${state.mode === 'protein'}">Protein</button><button data-action="mode" data-mode="carb" class="${state.mode === 'carb' ? 'active' : ''}" aria-pressed="${state.mode === 'carb'}">Kolhydrat</button></div>
-    ${state.mode !== 'all' ? `<label class="sr-only" for="category">Välj ${state.mode === 'protein' ? 'protein' : 'kolhydrat'}</label><select id="category"><option value="">${state.mode === 'protein' ? 'Alla proteiner' : 'Alla kolhydrater'}</option>${(state.mode === 'protein' ? PROTEINS : CARBS).map(item => `<option ${state.category === item ? 'selected' : ''}>${item}</option>`).join('')}</select>` : ''}</div>
-    <div class="tag-line">${[...firstTags,...extraTags].map(tag => `<button class="chip ${state.selectedTags.includes(tag) ? 'active' : ''}" data-action="tag" data-tag="${esc(tag)}" aria-pressed="${state.selectedTags.includes(tag)}">${icon(tagIcon(tag))}${esc(tag)}</button>`).join('')}<button class="chip chip-more" data-action="tags">${icon('plus')} Fler taggar</button></div>
-    ${state.selectedTags.length > 1 ? '<p class="small muted" style="margin-top:10px">Alla valda taggar måste stämma.</p>' : ''}
-    ${state.selectedTags.length || state.category || state.query ? '<button class="plain clear-filters" data-action="clear">Rensa filter</button>' : ''}</div>
-    <div class="random-prompt"><p>Svårt att bestämma dig för vad du ska laga?</p><button class="primary random-button" data-action="random">${icon('shuffle')}Slumpa recept</button></div></div><hr class="recipe-divider">`;
+  return `<label class="search">${icon('search')}<span class="sr-only">Sök recept på namn</span><input id="search" type="search" value="${esc(state.query)}" placeholder="Vad vill du laga?" autocomplete="off"></label><hr class="recipe-divider"><div class="random-prompt category-random-prompt"><p>Svårt att bestämma dig för vad du ska laga?</p><button class="primary random-button" data-action="random-choices">${icon('shuffle')}Slumpa recept</button></div><hr class="recipe-divider">`;
 }
 function renderCollection() {
   const recipes = currentRecipes();
@@ -149,9 +141,19 @@ function closeModal(force = false) {
   if (editorPhotoUrl) {URL.revokeObjectURL(editorPhotoUrl); editorPhotoUrl = null;}
   modal.close(); modal.innerHTML = ''; modalMode = '';
 }
+let randomChoice = {mode: 'protein', category: ''};
+function showRandomChoices() {
+  const symbols = {'Kyckling':'🍗','Rött kött':'🥩','Köttfärs':'🍔','Ris':'🍚','Pasta':'🍝','Potatis':'🥔','Couscous':'🥣','Bröd':'🍞'};
+  const choices = (items, mode) => items.map(category => `<button type="button" class="random-category" data-action="random-category" data-mode="${mode}" data-category="${esc(category)}"><span aria-hidden="true">${symbols[category]}</span>${esc(category)}</button>`).join('');
+  showModal(`${modalHead('Vad är du sugen på?')}<h3>Protein</h3><div class="random-categories">${choices(PROTEINS, 'protein')}</div><hr class="recipe-divider"><h3>Kolhydrater</h3><div class="random-categories">${choices(CARBS, 'carb')}</div>`, 'random-choices');
+}
 function showRandom() {
   const reshuffle = modal.open && modalMode === 'random';
-  const pool = currentRecipes(); const recipes = randomRecipes(pool).slice(0, 1);
+  const pool = filterRecipes(state.recipes, randomChoice); const recipes = randomRecipes(pool, 1);
+  if (!pool.length) {
+    showModal(`${modalHead('Inga recept ännu')}<p>Det finns inga recept med ${esc(randomChoice.category.toLocaleLowerCase('sv'))} i samlingen.</p><div class="random-actions">${actionsButton('random-choices','Välj en annan kategori',null,'primary')}</div>`, 'random-empty');
+    return;
+  }
   showModal(`${modalHead('Grattis! Ni ska laga:')}<div class="random-result"><div class="confetti" aria-hidden="true"></div><div class="random-result-content">${pool.length ? '' : '<p class="modal-description">Inga recept matchar. Prova att ändra dina filter.</p>'}<div class="random-grid">${recipes.map(recipeCard).join('')}</div></div></div><div class="random-actions">${pool.length > 1 ? actionsButton('random','Slumpa igen','shuffle','primary') : actionsButton('close','Tillbaka till recepten','arrow','secondary')}</div>`, 'random');
   if (reshuffle) $('.random-grid', modal).classList.add('random-shake');
   loadImages(modal);
@@ -277,6 +279,8 @@ document.addEventListener('click', async event => {
     case 'tag': {const tag = button.dataset.tag; state.selectedTags = state.selectedTags.includes(tag) ? state.selectedTags.filter(t => t !== tag) : [...state.selectedTags,tag]; renderHome(); if (modal.open && modalMode === 'tags') showTags(); break;}
     case 'tags': showTags(); break;
     case 'clear': state.mode = 'all'; state.category = ''; state.selectedTags = []; state.query = ''; renderHome(); break;
+    case 'random-choices': showRandomChoices(); break;
+    case 'random-category': randomChoice = {mode: button.dataset.mode, category: button.dataset.category}; showRandom(); break;
     case 'random': showRandom(); break;
     case 'favorite': await toggleFavorite(id, button); break;
     case 'multiply': state.multiplier = Number(button.dataset.multiplier); $('#serving-label').textContent = `${state.multiplier * 4} portioner`; $('#ingredients').innerHTML = detailIngredients(state.recipes.find(r => r.id === state.detail)); $('#scale-note').hidden = state.multiplier === 1; $$('[data-action="multiply"]').forEach(b => {const selected = Number(b.dataset.multiplier) === state.multiplier; b.classList.toggle('active',selected); b.setAttribute('aria-pressed',String(selected));}); break;
