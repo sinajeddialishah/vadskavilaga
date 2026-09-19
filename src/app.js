@@ -143,8 +143,8 @@ function closeModal(force = false) {
 }
 let randomChoice = {mode: 'protein', category: ''};
 function showRandomChoices() {
-  const symbols = {'Kyckling':'🍗','Rött kött':'🥩','Köttfärs':'🍔','Ris':'🍚','Pasta':'🍝','Potatis':'🥔','Couscous':'🥣','Bröd':'🍞'};
-  const choices = (items, mode) => items.map(category => `<button type="button" class="random-category" data-action="random-category" data-mode="${mode}" data-category="${esc(category)}"><span aria-hidden="true">${symbols[category]}</span>${esc(category)}</button>`).join('');
+  const symbols = {'Kyckling':'🍗','Rött kött':'🥩','Köttfärs':'🍔','Ris':'🍚','Pasta':'🍝','Potatis':'🥔','Couscous':'🥣','Bröd':'🍞','Övrigt':'🍽️'};
+  const choices = (items, mode) => items.map(category => `<button type="button" class="random-category" data-action="random-category" data-mode="${mode}" data-category="${esc(category)}"><span aria-hidden="true">${symbols[category] || '🍽️'}</span>${esc(category)}</button>`).join('');
   showModal(`${modalHead('Vad är du sugen på?')}<h3>Protein</h3><div class="random-categories">${choices(PROTEINS, 'protein')}</div><hr class="recipe-divider"><h3>Kolhydrater</h3><div class="random-categories">${choices(CARBS, 'carb')}</div>`, 'random-choices');
 }
 function showRandom() {
