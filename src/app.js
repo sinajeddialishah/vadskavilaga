@@ -1,4 +1,5 @@
 import './styles.css';
+import {parseRecipeText} from './recipe-import.js';
 import {icon} from './icons.js';
 import {PROTEINS, CARBS, DEFAULT_TAGS, AUTO_TAGS, effectiveTags, filterRecipes, randomRecipe, quantity, normaliseRecipe} from './domain.js';
 import {repository, configured, compressPhoto} from './repository.js';
@@ -189,12 +190,23 @@ function ingredientEditor(item = {amount: null,unit:'',name:''}, i = 0) {
 function stepEditor(step = '', i = 0) {
   return `<div class="step-editor"><span class="number">${i+1}.</span><textarea rows="2" required maxlength="4000" aria-label="Steg ${i+1}" placeholder="Beskriv steget…">${esc(step)}</textarea><button type="button" class="circle plain danger" data-action="remove-step" aria-label="Ta bort steg ${i+1}">${icon('close')}</button></div>`;
 }
-function showEditor(recipe) {
+function canImportRecipes() {
+  return !repository.isDemo && repository.user?.email?.toLowerCase() === 'sinajeddialishah@gmail.com';
+}
+function showNewRecipe() {
+  if (!canImportRecipes()) {showEditor(); return;}
+  showModal(`${modalHead('Nytt recept')}<div class="random-actions random-result-actions">${actionsButton('new-manual','Skriv recept själv','edit','primary')}${actionsButton('import-recipe','Klistra in recept',null,'secondary')}</div>`, 'new-choice');
+}
+function showImportRecipe() {
+  if (!canImportRecipes()) return;
+  showModal(`${modalHead('Klistra in recept')}<form id="import-form"><p class="modal-description">Klistra in ett recept för 4 portioner. Du får granska det före sparning.</p><label class="field">Recepttext<textarea name="recipe-text" rows="14" maxlength="40000" required placeholder="Namn: ...&#10;Portioner: 4&#10;Tid: 25 min&#10;Protein:&#10;Kolhydrat:&#10;&#10;Ingredienser:&#10;400 g ...&#10;&#10;Gör så här:&#10;1. ..."></textarea></label><p id="import-error" class="error" role="alert"></p><div class="form-footer"><button class="primary" type="submit">Granska recept</button></div></form>`, 'import');
+}
+function showEditor(recipe, asNew = false) {
   if (state.notesDirty && !confirmLeaving()) return;
-  editorRecipe = recipe ? structuredClone(recipe) : null;
+  editorRecipe = recipe && !asNew ? structuredClone(recipe) : null;
   editorPhoto = null; removeImage = false; state.formDirty = false;
   const r = recipe || {title:'', protein:'', carb:'', minutes:'', ingredients:[{amount:null,unit:'',name:''}], steps:[''], tags:[], notes:'', is_public:false};
-  showModal(`${modalHead(recipe ? 'Redigera recept' : 'Nytt recept')}<form id="recipe-form">
+  showModal(`${modalHead(editorRecipe ? 'Redigera recept' : 'Nytt recept')}<form id="recipe-form">
     <label class="field">Receptnamn<input name="title" value="${esc(r.title)}" placeholder="Vad vill du laga?" required maxlength="120"></label>
     <div class="two-fields"><label class="field">Protein<select name="protein"><option value="">Ingen proteintagg</option>${PROTEINS.map(p => `<option ${r.protein === p ? 'selected' : ''}>${p}</option>`).join('')}</select></label><label class="field">Kolhydrat<select name="carb"><option value="">Ingen kolhydratstagg</option>${CARBS.map(p => `<option ${r.carb === p ? 'selected' : ''}>${p}</option>`).join('')}</select></label></div>
     <label class="field">Tillagningstid i minuter<input type="number" name="minutes" min="1" max="1440" step="1" value="${esc(r.minutes)}" placeholder="Till exempel 30" required><span class="field-hint">Räkna med både förberedelser och tillagning.</span></label>
@@ -275,7 +287,9 @@ document.addEventListener('click', async event => {
     case 'nav': navigate(button.dataset.route); break;
     case 'back': navigate('recipes'); break;
     case 'open': navigate('detail',id); break;
-    case 'new': showEditor(); break;
+    case 'new': showNewRecipe(); break;
+    case 'new-manual': showEditor(); break;
+    case 'import-recipe': showImportRecipe(); break;
     case 'share': await shareRecipe(id); break;
     case 'edit': showEditor(state.recipes.find(r => r.id === id)); break;
     case 'close': closeModal(); break;
@@ -323,7 +337,7 @@ document.addEventListener('click', async event => {
 document.addEventListener('input', event => {
   if (event.target.id === 'search') {state.query = event.target.value; renderCollection();}
   if (event.target.id === 'notes') {const recipe = state.recipes.find(r => r.id === state.detail); state.notesDirty = event.target.value !== recipe.notes; $('#save-notes').disabled = !state.notesDirty || state.busy; $('#notes-status').textContent = state.notesDirty ? 'Du har osparade ändringar.' : 'Ändringar ersätter tidigare text.';}
-  if (event.target.closest('#recipe-form')) state.formDirty = true;
+  if (event.target.closest('#recipe-form, #import-form')) state.formDirty = true;
   if (event.target.name === 'minutes') $('#auto-tag').textContent = Number(event.target.value) > 0 && Number(event.target.value) <= 30 ? '✓ Snabbt läggs till automatiskt vid högst 30 minuter.' : 'Snabbt läggs till automatiskt vid högst 30 minuter.';
 });
 document.addEventListener('change', async event => {
@@ -336,6 +350,15 @@ document.addEventListener('change', async event => {
   }
 });
 document.addEventListener('submit', async event => {
+  if (event.target.id === 'import-form') {
+    event.preventDefault();
+    if (!canImportRecipes()) return;
+    try {
+      const draft = parseRecipeText(new FormData(event.target).get('recipe-text'));
+      showEditor(draft, true);
+      state.formDirty = true;
+    } catch (error) {$('#import-error').textContent = error.message;}
+  }
   if (event.target.id === 'recipe-form') {event.preventDefault(); await saveRecipe(event.target);}
   if (event.target.id === 'tag-form') {
     event.preventDefault(); const tag = $('#new-tag').value.trim(); $('#tag-error').textContent = '';
