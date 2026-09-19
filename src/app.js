@@ -154,7 +154,7 @@ function showRandom() {
     showModal(`${modalHead('Inga recept ännu')}<p>Det finns inga recept med ${esc(randomChoice.category.toLocaleLowerCase('sv'))} i samlingen.</p><div class="random-actions">${actionsButton('random-choices','Välj en annan kategori',null,'primary')}</div>`, 'random-empty');
     return;
   }
-  showModal(`${modalHead('Grattis! Ni ska laga:')}<div class="random-result"><div class="confetti" aria-hidden="true"></div><div class="random-result-content">${pool.length ? '' : '<p class="modal-description">Inga recept matchar. Prova att ändra dina filter.</p>'}<div class="random-grid">${recipes.map(recipeCard).join('')}</div></div></div><div class="random-actions">${pool.length > 1 ? actionsButton('random','Slumpa igen','shuffle','primary') : actionsButton('close','Tillbaka till recepten','arrow','secondary')}</div>`, 'random');
+  showModal(`${modalHead('Grattis! Ni ska laga:')}<div class="random-result"><div class="confetti" aria-hidden="true"></div><div class="random-result-content">${pool.length ? '' : '<p class="modal-description">Inga recept matchar. Prova att ändra dina filter.</p>'}<div class="random-grid">${recipes.map(recipeCard).join('')}</div></div></div><div class="random-actions random-result-actions">${actionsButton('random','Slumpa igen','shuffle','primary')}${actionsButton('close','Tillbaka till recepten','arrow','secondary')}</div>`, 'random');
   if (reshuffle) $('.random-grid', modal).classList.add('random-shake');
   loadImages(modal);
 }
