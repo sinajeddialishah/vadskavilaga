@@ -44,6 +44,10 @@ export function filterRecipes(recipes, {query = '', mode = 'all', category = '',
     tags.every(tag => effectiveTags(recipe).includes(tag))
   );
 }
+export function randomRecipe(recipes, previousId, random = Math.random) {
+  const candidates = recipes.length > 1 ? recipes.filter(recipe => recipe.id !== previousId) : recipes;
+  return candidates.length ? candidates[Math.floor(random() * candidates.length)] : null;
+}
 export function randomRecipes(recipes, count = 3, random = Math.random) {
   const pool = [...recipes];
   for (let i = pool.length - 1; i > 0; i--) {

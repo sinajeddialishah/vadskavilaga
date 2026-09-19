@@ -1,6 +1,6 @@
 import './styles.css';
 import {icon} from './icons.js';
-import {PROTEINS, CARBS, DEFAULT_TAGS, AUTO_TAGS, effectiveTags, filterRecipes, randomRecipes, quantity, normaliseRecipe} from './domain.js';
+import {PROTEINS, CARBS, DEFAULT_TAGS, AUTO_TAGS, effectiveTags, filterRecipes, randomRecipe, quantity, normaliseRecipe} from './domain.js';
 import {repository, configured, compressPhoto} from './repository.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -142,6 +142,7 @@ function closeModal(force = false) {
   modal.close(); modal.innerHTML = ''; modalMode = '';
 }
 let randomChoice = {mode: 'protein', category: ''};
+let previousRandomId = null;
 function showRandomChoices() {
   const symbols = {'Kyckling':'🍗','Rött kött':'🥩','Köttfärs':'🍔','Ris':'🍚','Pasta':'🍝','Potatis':'🥔','Couscous':'🥣','Bröd':'🍞','Övrigt':'🍽️'};
   const choices = (items, mode) => items.map(category => `<button type="button" class="random-category" data-action="random-category" data-mode="${mode}" data-category="${esc(category)}"><span aria-hidden="true">${symbols[category] || '🍽️'}</span>${esc(category)}</button>`).join('');
@@ -149,7 +150,10 @@ function showRandomChoices() {
 }
 function showRandom() {
   const reshuffle = modal.open && modalMode === 'random';
-  const pool = filterRecipes(state.recipes, randomChoice); const recipes = randomRecipes(pool, 1);
+  const pool = filterRecipes(state.recipes, randomChoice);
+  const chosen = randomRecipe(pool, previousRandomId);
+  const recipes = chosen ? [chosen] : [];
+  if (chosen) previousRandomId = chosen.id;
   if (!pool.length) {
     showModal(`${modalHead('Inga recept ännu')}<p>Det finns inga recept med ${esc(randomChoice.category.toLocaleLowerCase('sv'))} i samlingen.</p><div class="random-actions">${actionsButton('random-choices','Välj en annan kategori',null,'primary')}</div>`, 'random-empty');
     return;
