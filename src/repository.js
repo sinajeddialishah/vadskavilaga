@@ -43,7 +43,8 @@ export const repository = {
     if (demo) {
       if (db) {
         const {data, error} = await db.rpc('list_public_preview_recipes');
-        if (!error && data?.length) return {recipes: data.map(recipe => ({...recipe, notes: '', favorite: false, is_public: true, is_mine: false, revision: 1})), tags: [...demoTags]};
+        check(error);
+        return {recipes: (data || []).map(recipe => ({...recipe, notes: '', favorite: false, is_public: true, is_mine: false, revision: 1})), tags: [...demoTags]};
       }
       return {recipes: structuredClone(demoRecipes), tags: [...demoTags]};
     }
@@ -80,6 +81,16 @@ export const repository = {
     check(error);
     if (!data.length) throw new Error('Receptet har ändrats på en annan enhet. Uppdatera innan du tar bort det.');
     if (recipe.image_path) await this.removePhoto(recipe.image_path);
+  },
+  async removeTag(tag) {
+    if (tag === 'Snabbt') throw new Error('Snabbt är en automatisk tagg.');
+    if (demo) {
+      demoTags = demoTags.filter(t => t !== tag);
+      demoRecipes = demoRecipes.map(r => ({...r, tags: r.tags.filter(t => t !== tag)}));
+      return [...demoTags];
+    }
+    const {data, error} = await db.rpc('remove_recipe_tag', {tag_to_remove: tag});
+    check(error); return data;
   },
   async addTag(tag) {
     if (demo) { demoTags = [...new Set([...demoTags, tag])]; return [...demoTags]; }

@@ -1,8 +1,8 @@
-export const PROTEINS = ['Kyckling', 'Rött kött', 'Köttfärs', 'Övrigt'];
-export const CARBS = ['Ris', 'Pasta', 'Potatis', 'Couscous', 'Bröd', 'Övrigt'];
+export const PROTEINS = ['Kyckling', 'Rött kött', 'Köttfärs'];
+export const CARBS = ['Ris', 'Pasta', 'Potatis', 'Couscous', 'Bröd'];
 export const DEFAULT_TAGS = ['Snabbt', 'Billigt', 'Matlådevänligt', 'Frysvänligt', 'Få ingredienser', 'Lättlagat', 'Allt i en gryta', 'Storkok', 'Helgmat', 'Bjudmat'];
 export const SEED_RECIPE = {
-  id: 'demo-flaskpannkaka', title: 'Fläskpannkaka', protein: 'Övrigt', carb: 'Övrigt', minutes: 45,
+  id: 'demo-flaskpannkaka', title: 'Fläskpannkaka', protein: '', carb: '', minutes: 45,
   tags: ['Få ingredienser', 'Lättlagat', 'Matlådevänligt'], favorite: false, notes: '', revision: 1,
   image_path: null, starter_image: true,
   ingredients: [
@@ -23,9 +23,18 @@ export const SEED_RECIPE = {
   source_url: 'https://www.hemkop.se/recept/flaskpannkaka',
   source_label: 'Egen variant av Hemköps grundrecept'
 };
+export const AUTO_TAGS = ['Snabbt', 'Få ingredienser', 'Lättlagat'];
 export function effectiveTags(recipe) {
-  const tags = recipe.tags.filter(tag => tag !== 'Snabbt');
-  return recipe.minutes > 0 && recipe.minutes <= 30 ? ['Snabbt', ...tags] : tags;
+  const tags = recipe.tags.filter(tag => !AUTO_TAGS.includes(tag));
+  const automatic = [];
+  const ingredients = (recipe.ingredients || []).filter(item => String(item.name || '').trim()).length;
+  const steps = (recipe.steps || []).filter(step => String(step).trim()).length;
+  if (recipe.minutes > 0 && recipe.minutes <= 30) automatic.push('Snabbt');
+  if (ingredients > 0 && ingredients <= 6) {
+    automatic.push('Få ingredienser');
+    if (steps > 0 && steps <= 5) automatic.push('Lättlagat');
+  }
+  return [...automatic, ...tags];
 }
 export function filterRecipes(recipes, {query = '', mode = 'all', category = '', tags = [], favorites = false} = {}) {
   return recipes.filter(recipe =>
@@ -52,8 +61,8 @@ export function normaliseRecipe(input) {
   if (!title || title.length > 120) throw new Error('Ange ett receptnamn på högst 120 tecken.');
   const minutes = Number(input.minutes);
   if (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440) throw new Error('Ange en tid mellan 1 och 1440 minuter.');
-  const protein = input.protein ?? '';
-  const carb = input.carb ?? '';
+  const protein = input.protein === 'Övrigt' ? '' : (input.protein ?? '');
+  const carb = input.carb === 'Övrigt' ? '' : (input.carb ?? '');
   if ((protein !== '' && !PROTEINS.includes(protein)) || (carb !== '' && !CARBS.includes(carb))) throw new Error('Välj en giltig kategori eller lämna fältet tomt.');
   const ingredients = input.ingredients.map(item => ({
     amount: item.amount === '' || item.amount === null ? null : Number(String(item.amount).replace(',', '.')),
@@ -63,5 +72,5 @@ export function normaliseRecipe(input) {
   if (ingredients.some(item => item.amount !== null && (!Number.isFinite(item.amount) || item.amount <= 0 || item.amount > 100000))) throw new Error('Ingrediensmängder ska vara positiva tal, eller lämnas tomma.');
   const steps = input.steps.map(step => String(step).trim()).filter(Boolean);
   if (!steps.length) throw new Error('Lägg till minst ett tillagningssteg.');
-  return {...input, protein, carb, title, minutes, ingredients, steps, tags: [...new Set(input.tags.filter(tag => tag !== 'Snabbt'))], notes: String(input.notes || '').slice(0, 10000)};
+  return {...input, protein, carb, title, minutes, ingredients, steps, tags: [...new Set(input.tags.filter(tag => !AUTO_TAGS.includes(tag)))], notes: String(input.notes || '').slice(0, 10000)};
 }

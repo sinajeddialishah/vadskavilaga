@@ -1,6 +1,6 @@
 import './styles.css';
 import {icon} from './icons.js';
-import {PROTEINS, CARBS, DEFAULT_TAGS, effectiveTags, filterRecipes, randomRecipes, quantity, normaliseRecipe} from './domain.js';
+import {PROTEINS, CARBS, DEFAULT_TAGS, AUTO_TAGS, effectiveTags, filterRecipes, randomRecipes, quantity, normaliseRecipe} from './domain.js';
 import {repository, configured, compressPhoto} from './repository.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -61,7 +61,7 @@ async function loadImages(root = document) {
 }
 function tagIcon(tag) { return ({Snabbt: 'bolt', Billigt: 'coins', Matlådevänligt: 'lunch'})[tag] || 'tag'; }
 function renderFilters() {
-  return `<label class="search">${icon('search')}<span class="sr-only">Sök recept på namn</span><input id="search" type="search" value="${esc(state.query)}" placeholder="Vad vill du laga?" autocomplete="off"></label><hr class="recipe-divider"><div class="random-prompt category-random-prompt"><p>Svårt att bestämma dig för vad du ska laga?</p><button class="primary random-button" data-action="random-choices">${icon('shuffle')}Slumpa recept</button></div><hr class="recipe-divider">`;
+  return `<label class="search">${icon('search')}<span class="sr-only">Sök recept på namn</span><input id="search" type="search" value="${esc(state.query)}" placeholder="Sök recept" autocomplete="off"></label><hr class="recipe-divider"><div class="random-prompt category-random-prompt"><p>Svårt att bestämma dig för vad du ska laga?</p><button class="primary random-button" data-action="random-choices">${icon('shuffle')}Slumpa recept</button></div><hr class="recipe-divider">`;
 }
 function renderCollection() {
   const recipes = currentRecipes();
@@ -99,7 +99,7 @@ function renderDetail(id) {
 function renderSettings() {
   state.detail = null;
   app.innerHTML = chrome(`<div class="page-heading"><div><h1>Inställningar</h1><p>Gör receptboken till din.</p></div></div>
-    <section class="settings-card"><h2>Dina taggar</h2><p>Alla valda taggar måste stämma när du filtrerar. Snabbt läggs automatiskt till för recept på högst 30 minuter.</p><div class="settings-tags">${state.tags.map(tag => `<span class="badge">${esc(tag)}</span>`).join('')}</div><form id="tag-form" class="tag-form"><label for="new-tag" class="sr-only">Ny tagg</label><input id="new-tag" name="tag" placeholder="Till exempel Grillat" maxlength="30" required><button class="primary" type="submit">${icon('plus')}Lägg till</button></form><p id="tag-error" class="error inline-error" role="alert"></p></section>
+    <section class="settings-card"><h2>Dina taggar</h2><p>Alla valda taggar måste stämma när du filtrerar. Automatiska taggar: Snabbt vid högst 30 minuter, Få ingredienser vid högst 6 ingredienser och Lättlagat vid högst 6 ingredienser och 5 steg.</p><div class="settings-tags">${state.tags.filter(tag => !AUTO_TAGS.includes(tag)).map(tag => `<span class="badge removable-tag">${esc(tag)}${tag === 'Snabbt' ? '' : `<button type="button" class="tag-remove" data-action="remove-tag" data-tag="${esc(tag)}" aria-label="Ta bort taggen ${esc(tag)}">${icon('close')}</button>`}</span>`).join('')}</div><form id="tag-form" class="tag-form"><label for="new-tag" class="sr-only">Ny tagg</label><input id="new-tag" name="tag" placeholder="Till exempel Grillat" maxlength="30" required><button class="primary" type="submit">${icon('plus')}Lägg till</button></form><p id="tag-error" class="error inline-error" role="alert"></p></section>
     <section class="settings-card"><h2>På hemskärmen</h2><p>Öppna appen i Chrome på Android. Välj menyn ⋮ och sedan ”Lägg till på startskärmen” eller ”Installera app”. Appen behöver internet.</p>${installPrompt ? actionsButton('install','Lägg till på hemskärmen','download','secondary') : ''}</section>
     <section class="settings-card"><h2>Ditt konto</h2><div class="account-line"><span class="avatar">${icon('book')}</span><div class="account-name">${repository.isDemo ? 'Förhandsvisning' : esc(repository.user?.email || 'Google-konto')}<p>${repository.isDemo ? 'Ingen kontokoppling är aktiv.' : 'Bara ditt konto har tillgång till din samling.'}</p></div></div><p>${repository.isDemo ? 'Du kan prova alla funktioner här. Recept, bilder och ändringar försvinner när sidan laddas om. Koppla in ditt konto före riktig användning.' : 'Recept, bilder, taggar och anteckningar sparas privat på ditt konto. På någon annans mobil: logga ut när du är klar.'}</p>${actionsButton('logout', repository.isDemo ? 'Till inloggning' : 'Logga ut på den här mobilen','logout','plain')}</section>`);
 }
@@ -196,7 +196,7 @@ function showEditor(recipe) {
     <label class="field">Tillagningstid i minuter<input type="number" name="minutes" min="1" max="1440" step="1" value="${esc(r.minutes)}" placeholder="Till exempel 30" required><span class="field-hint">Räkna med både förberedelser och tillagning.</span></label>
     <section class="form-section"><h3>Ingredienser för 4 portioner</h3><p class="hint">Mängderna räknas om för 8 och 12 portioner. Lämna mängden tom för till exempel lingon till servering.</p><div class="ingredient-labels"><span>Mängd</span><span>Enhet</span><span>Ingrediens</span></div><div id="ingredient-editors">${r.ingredients.map(ingredientEditor).join('')}</div><datalist id="units">${['g','kg','ml','dl','l','tsk','msk','krm','st','paket'].map(unit => `<option value="${unit}">`).join('')}</datalist>${actionsButton('add-ingredient','Lägg till ingrediens','plus','secondary')}</section>
     <section class="form-section"><h3>Gör så här</h3><div id="step-editors">${r.steps.map(stepEditor).join('')}</div>${actionsButton('add-step','Lägg till steg','plus','secondary')}</section>
-    <section class="form-section"><h3>Taggar</h3><div class="form-tag-grid">${state.tags.filter(tag => tag !== 'Snabbt').map(tag => `<label class="tag-choice"><input type="checkbox" name="tags" value="${esc(tag)}" ${r.tags.includes(tag) ? 'checked' : ''}>${esc(tag)}</label>`).join('')}</div><p class="auto-tag" id="auto-tag">${r.minutes > 0 && r.minutes <= 30 ? '✓ Snabbt läggs till automatiskt vid högst 30 minuter.' : 'Snabbt läggs till automatiskt vid högst 30 minuter.'}</p></section>
+    <section class="form-section"><h3>Taggar</h3><div class="form-tag-grid">${state.tags.filter(tag => !AUTO_TAGS.includes(tag)).map(tag => `<label class="tag-choice"><input type="checkbox" name="tags" value="${esc(tag)}" ${r.tags.includes(tag) ? 'checked' : ''}>${esc(tag)}</label>`).join('')}</div><p class="auto-tag" id="auto-tag">${r.minutes > 0 && r.minutes <= 30 ? '✓ Snabbt läggs till automatiskt vid högst 30 minuter.' : 'Snabbt läggs till automatiskt vid högst 30 minuter.'}</p><p class="auto-tag">Få ingredienser läggs till automatiskt vid högst 6 ingredienser. Lättlagat kräver högst 6 ingredienser och 5 steg.</p></section>
     <section class="form-section"><label class="tag-choice"><input type="checkbox" name="is_public" ${r.is_public ? 'checked' : ''}>Publicera receptet</label><p class="hint">Titel, ingredienser och steg kan ses av andra inloggade användare. Dina anteckningar och favoriter förblir privata.</p></section>
     <section class="form-section"><h3>Bild på maten <span class="small muted">· valfritt</span></h3><label class="photo-upload" for="photo-input">${icon('camera')}<span><strong>Välj ett eget foto</strong><small>En bild per recept. JPG, PNG eller WebP.</small></span></label><input id="photo-input" type="file" accept="image/*" class="sr-only"><img id="editor-photo" class="editor-photo" alt="Receptbild" ${r.image_path || r.starter_image ? '' : 'hidden'} ${r.starter_image && !r.image_path ? 'src="./flaskpannkaka.webp"' : ''}>${actionsButton('remove-photo','Ta bort bilden','trash','plain danger',`id="remove-photo" ${r.image_path || r.starter_image ? '' : 'hidden'}`)}</section>
     <section class="form-section"><label class="field">Egna anteckningar<textarea name="notes" rows="3" maxlength="10000" placeholder="Det du vill komma ihåg till nästa gång…">${esc(r.notes)}</textarea></label></section>
@@ -287,6 +287,18 @@ document.addEventListener('click', async event => {
     case 'uncheck': state.checks.clear(); $$('[data-check]').forEach(input => {input.checked = false;}); break;
     case 'save-notes': await saveNotes(); break;
     case 'delete': await deleteRecipe(id); break;
+    case 'remove-tag': {
+      const tag = button.dataset.tag;
+      if (!confirm(`Ta bort taggen ”${tag}” från dina inställningar och dina recept?`)) break;
+      button.disabled = true;
+      try {
+        state.tags = await repository.removeTag(tag);
+        state.selectedTags = state.selectedTags.filter(t => t !== tag);
+        await startLibrary();
+        notify('Taggen är borttagen.');
+      } catch (error) {notify(readableError(error)); button.disabled = false;}
+      break;
+    }
     case 'add-ingredient': $('#ingredient-editors').insertAdjacentHTML('beforeend',ingredientEditor(undefined,$$('.ingredient-editor').length)); state.formDirty = true; $('.ingredient-editor:last-child [data-field="name"]').focus(); break;
     case 'remove-ingredient': if ($$('.ingredient-editor').length === 1) {notify('Receptet behöver minst en ingrediens.'); break;} button.closest('.ingredient-editor').remove(); state.formDirty = true; renumberEditors(); break;
     case 'add-step': $('#step-editors').insertAdjacentHTML('beforeend',stepEditor('',$$('.step-editor').length)); state.formDirty = true; $('.step-editor:last-child textarea').focus(); break;
@@ -324,7 +336,7 @@ document.addEventListener('submit', async event => {
   if (event.target.id === 'tag-form') {
     event.preventDefault(); const tag = $('#new-tag').value.trim(); $('#tag-error').textContent = '';
     if (!tag) return;
-    if (state.tags.some(t => t.toLocaleLowerCase('sv') === tag.toLocaleLowerCase('sv'))) {$('#tag-error').textContent = 'Den taggen finns redan.'; return;}
+    if ([...state.tags, ...AUTO_TAGS].some(t => t.toLocaleLowerCase('sv') === tag.toLocaleLowerCase('sv'))) {$('#tag-error').textContent = 'Den taggen finns redan.'; return;}
     const button = $('button',event.target); button.disabled = true;
     try {state.tags = await repository.addTag(tag); renderSettings(); notify('Taggen är tillagd.');} catch(error) {$('#tag-error').textContent = readableError(error); button.disabled = false;}
   }
