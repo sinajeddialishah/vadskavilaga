@@ -94,6 +94,7 @@ function renderDetail(id) {
     ${recipe.image_path || recipe.starter_image ? `<div class="detail-hero">${imageMarkup(recipe,true)}</div>` : ''}
     <div class="card-tags">${recipe.protein ? `<span class="badge">${esc(recipe.protein)}</span>` : ''}${recipe.carb ? `<span class="badge">${esc(recipe.carb)}</span>` : ''}</div>
     <h1 class="detail-title">${esc(recipe.title)}</h1><div class="detail-meta"><span>${icon('clock')}${recipe.minutes} min</span><span>${icon('users')}<span id="serving-label">${state.multiplier * 4} portioner</span></span></div>
+    ${actionsButton('share','Dela recept',null,'secondary',`data-id="${esc(id)}"`)}
     <div class="card-tags">${recipe.is_public ? '<span class="badge">Publikt recept</span>' : ''}${effectiveTags(recipe).map(tag => `<span class="badge">${esc(tag)}</span>`).join('')}</div>
     <div class="portion-panel"><div><strong>Hur många äter?</strong><p>Grundreceptet är för 4 portioner.</p></div><div class="multipliers" aria-label="Antal portioner">${[1,2,3].map(m => `<button class="${state.multiplier === m ? 'active' : ''}" data-action="multiply" data-multiplier="${m}" aria-label="${m * 4} portioner" aria-pressed="${state.multiplier === m}">${m}×</button>`).join('')}</div></div>
     <p id="scale-note" class="scale-note" ${state.multiplier === 1 ? 'hidden' : ''}>Ingredienslistan är omräknad. Mängder i stegtexten gäller 4 portioner. Använd fler formar vid behov; tillagningstiden blir inte automatiskt längre.</p>
@@ -154,6 +155,24 @@ function showRandom() {
   showModal(`${modalHead('Grattis! Ni ska laga:')}<div class="random-result"><div class="confetti" aria-hidden="true"></div><div class="random-result-content">${pool.length ? '' : '<p class="modal-description">Inga recept matchar. Prova att ändra dina filter.</p>'}<div class="random-grid">${recipes.map(recipeCard).join('')}</div></div></div><div class="random-actions">${pool.length > 1 ? actionsButton('random','Slumpa igen','shuffle','primary') : actionsButton('close','Tillbaka till recepten','arrow','secondary')}</div>`, 'random');
   if (reshuffle) $('.random-grid', modal).classList.add('random-shake');
   loadImages(modal);
+}
+async function shareRecipe(id) {
+  const recipe = state.recipes.find(r => r.id === id);
+  if (!recipe) return;
+  if (!recipe.is_public) {notify('Publicera receptet under Redigera först, så kan andra öppna länken.'); return;}
+  if (!configured || (repository.isDemo && recipe.is_mine !== false)) {notify('Spara receptet på ditt konto och publicera det först.'); return;}
+  const url = new URL(location.pathname, location.origin);
+  url.hash = `recept/${encodeURIComponent(id)}`;
+  const link = url.href;
+  if (navigator.share) {
+    try {await navigator.share({title: recipe.title, url: link}); return;}
+    catch (error) {if (error.name === 'AbortError') return;}
+  }
+  try {await navigator.clipboard.writeText(link); notify('Receptlänken är kopierad!');}
+  catch {
+    showModal(`${modalHead('Dela recept')}<label class="field">Kopiera länken<input readonly value="${esc(link)}" aria-label="Receptlänk"></label>`, 'share');
+    $('input', modal).select();
+  }
 }
 function showTags() {
   showModal(`${modalHead('Vad passar idag?')}<p class="modal-description">Välj flera. Receptet måste ha alla taggar du väljer.</p><div class="tag-modal-list">${state.tags.map(tag => `<button class="chip ${state.selectedTags.includes(tag) ? 'active' : ''}" data-action="tag" data-tag="${esc(tag)}" aria-pressed="${state.selectedTags.includes(tag)}">${state.selectedTags.includes(tag) ? icon('check') : icon(tagIcon(tag))}${esc(tag)}</button>`).join('')}</div><div class="form-footer">${actionsButton('close','Visa recept','check','primary')}</div>`, 'tags');
@@ -251,6 +270,7 @@ document.addEventListener('click', async event => {
     case 'back': navigate('recipes'); break;
     case 'open': navigate('detail',id); break;
     case 'new': showEditor(); break;
+    case 'share': await shareRecipe(id); break;
     case 'edit': showEditor(state.recipes.find(r => r.id === id)); break;
     case 'close': closeModal(); break;
     case 'mode': state.mode = button.dataset.mode; state.category = ''; renderHome(); break;
@@ -323,7 +343,9 @@ async function startLibrary() {
 async function init() {
   try {
     if (!configured) {repository.startDemo(); await startLibrary();}
-    else if (await repository.session()) await startLibrary(); else showLogin();
+    else if (await repository.session()) await startLibrary();
+    else if (location.hash.startsWith('#recept/')) {repository.startDemo(); await startLibrary();}
+    else showLogin();
   } catch(error) {showLogin(readableError(error));}
 }
 init();
