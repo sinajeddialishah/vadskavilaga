@@ -147,7 +147,7 @@ let previousRandomId = null;
 function showRandomChoices() {
   const symbols = {'Kyckling':'🍗','Rött kött':'🥩','Köttfärs':'🍔','Ris':'🍚','Pasta':'🍝','Potatis':'🥔','Couscous':'🥣','Bröd':'🍞','Övrigt':'🍽️'};
   const choices = (items, mode) => items.map(category => `<button type="button" class="random-category" data-action="random-category" data-mode="${mode}" data-category="${esc(category)}"><span aria-hidden="true">${symbols[category] || '🍽️'}</span>${esc(category)}</button>`).join('');
-  showModal(`${modalHead('Vad är du sugen på?')}<h3>Protein</h3><div class="random-categories">${choices(PROTEINS, 'protein')}</div><hr class="recipe-divider"><h3>Kolhydrater</h3><div class="random-categories">${choices(CARBS, 'carb')}</div>`, 'random-choices');
+  showModal(`${modalHead('Vad är du sugen på?')}<button type="button" class="primary random-all" data-action="random-all">${icon('shuffle')}<span><strong>Överraska mig</strong><small>Slumpa bland alla recept</small></span></button><hr class="recipe-divider"><h3>Protein</h3><div class="random-categories">${choices(PROTEINS, 'protein')}</div><hr class="recipe-divider"><h3>Kolhydrater</h3><div class="random-categories">${choices(CARBS, 'carb')}</div>`, 'random-choices');
 }
 function showRandom() {
   const reshuffle = modal.open && modalMode === 'random';
@@ -298,6 +298,7 @@ document.addEventListener('click', async event => {
     case 'tags': showTags(); break;
     case 'clear': state.mode = 'all'; state.category = ''; state.selectedTags = []; state.query = ''; renderHome(); break;
     case 'random-choices': showRandomChoices(); break;
+    case 'random-all': randomChoice = {mode: 'all', category: ''}; showRandom(); break;
     case 'random-category': randomChoice = {mode: button.dataset.mode, category: button.dataset.category}; showRandom(); break;
     case 'random': showRandom(); break;
     case 'favorite': await toggleFavorite(id, button); break;
