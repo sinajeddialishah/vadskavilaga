@@ -214,7 +214,7 @@ function showEditor(recipe, asNew = false) {
     <section class="form-section"><h3>Gör så här</h3><div id="step-editors">${r.steps.map(stepEditor).join('')}</div>${actionsButton('add-step','Lägg till steg','plus','secondary')}</section>
     <section class="form-section"><h3>Taggar</h3><div class="form-tag-grid">${state.tags.filter(tag => !AUTO_TAGS.includes(tag)).map(tag => `<label class="tag-choice"><input type="checkbox" name="tags" value="${esc(tag)}" ${r.tags.includes(tag) ? 'checked' : ''}>${esc(tag)}</label>`).join('')}</div><p class="auto-tag" id="auto-tag">${r.minutes > 0 && r.minutes <= 30 ? '✓ Snabbt läggs till automatiskt vid högst 30 minuter.' : 'Snabbt läggs till automatiskt vid högst 30 minuter.'}</p><p class="auto-tag">Få ingredienser läggs till automatiskt vid högst 6 ingredienser. Lättlagat kräver högst 6 ingredienser och 5 steg.</p></section>
     <section class="form-section"><label class="tag-choice"><input type="checkbox" name="is_public" ${r.is_public ? 'checked' : ''}>Publicera receptet</label><p class="hint">Titel, ingredienser och steg kan ses av andra inloggade användare. Dina anteckningar och favoriter förblir privata.</p></section>
-    <section class="form-section"><h3>Bild på maten <span class="small muted">· valfritt</span></h3><label class="photo-upload" for="photo-input">${icon('camera')}<span><strong>Välj ett eget foto</strong><small>En bild per recept. JPG, PNG eller WebP.</small></span></label><input id="photo-input" type="file" accept="image/*" class="sr-only"><img id="editor-photo" class="editor-photo" alt="Receptbild" ${r.image_path || r.starter_image ? '' : 'hidden'} ${r.starter_image && !r.image_path ? 'src="./flaskpannkaka.webp"' : ''}>${actionsButton('remove-photo','Ta bort bilden','trash','plain danger',`id="remove-photo" ${r.image_path || r.starter_image ? '' : 'hidden'}`)}</section>
+    <section class="form-section"><h3>Bild på maten <span class="small muted">· valfritt</span></h3><div class="photo-source-options">${actionsButton('take-photo','Ta bild','camera','secondary')}${actionsButton('choose-photo','Välj bild',null,'secondary')}</div><p class="hint">En bild per recept. JPG, PNG eller WebP.</p><input id="photo-input" type="file" accept="image/*" class="sr-only" aria-label="Välj bild"><input id="camera-input" type="file" accept="image/*" capture="environment" class="sr-only" aria-label="Ta bild"><img id="editor-photo" class="editor-photo" alt="Receptbild" ${r.image_path || r.starter_image ? '' : 'hidden'} ${r.starter_image && !r.image_path ? 'src="./flaskpannkaka.webp"' : ''}>${actionsButton('remove-photo','Ta bort bilden','trash','plain danger',`id="remove-photo" ${r.image_path || r.starter_image ? '' : 'hidden'}`)}</section>
     <section class="form-section"><label class="field">Egna anteckningar<textarea name="notes" rows="3" maxlength="10000" placeholder="Det du vill komma ihåg till nästa gång…">${esc(r.notes)}</textarea></label></section>
     <p id="form-error" class="error inline-error" role="alert"></p><div class="form-footer">${actionsButton('close','Avbryt',null,'plain')}<button class="primary" type="submit" id="save-recipe">${icon('check')}Spara recept</button></div></form>`, 'editor');
   if (r.image_path) repository.photoUrl(r.image_path).then(url => {const img = $('#editor-photo'); if (img && url && !editorPhoto && !removeImage) img.src = url;}).catch(error => {$('#form-error').textContent = readableError(error);});
@@ -289,6 +289,8 @@ document.addEventListener('click', async event => {
     case 'open': navigate('detail',id); break;
     case 'new': showNewRecipe(); break;
     case 'new-manual': showEditor(); break;
+    case 'take-photo': if (!state.busy) {$('#camera-input').value = ''; $('#camera-input').click();} break;
+    case 'choose-photo': if (!state.busy) {$('#photo-input').value = ''; $('#photo-input').click();} break;
     case 'import-recipe': showImportRecipe(); break;
     case 'share': await shareRecipe(id); break;
     case 'edit': showEditor(state.recipes.find(r => r.id === id)); break;
@@ -322,7 +324,7 @@ document.addEventListener('click', async event => {
     case 'remove-ingredient': if ($$('.ingredient-editor').length === 1) {notify('Receptet behöver minst en ingrediens.'); break;} button.closest('.ingredient-editor').remove(); state.formDirty = true; renumberEditors(); break;
     case 'add-step': $('#step-editors').insertAdjacentHTML('beforeend',stepEditor('',$$('.step-editor').length)); state.formDirty = true; $('.step-editor:last-child textarea').focus(); break;
     case 'remove-step': if ($$('.step-editor').length === 1) {notify('Receptet behöver minst ett steg.'); break;} button.closest('.step-editor').remove(); state.formDirty = true; renumberEditors(); break;
-    case 'remove-photo': editorPhoto = null; removeImage = true; $('#editor-photo').hidden = true; $('#remove-photo').hidden = true; $('#photo-input').value = ''; state.formDirty = true; break;
+    case 'remove-photo': editorPhoto = null; removeImage = true; $('#editor-photo').hidden = true; $('#remove-photo').hidden = true; $('#photo-input').value = ''; $('#camera-input').value = ''; state.formDirty = true; break;
     case 'login': button.disabled = true; try {await repository.login();} catch(error) {$('#login-error').textContent = readableError(error); button.disabled = false;} break;
     case 'demo':
       repository.startDemo();
@@ -344,7 +346,7 @@ document.addEventListener('input', event => {
 document.addEventListener('change', async event => {
   if (event.target.id === 'category') {state.category = event.target.value; renderHome();}
   if (event.target.dataset.check) {event.target.checked ? state.checks.add(event.target.dataset.check) : state.checks.delete(event.target.dataset.check);}
-  if (event.target.id === 'photo-input' && event.target.files[0]) {
+  if (['photo-input', 'camera-input'].includes(event.target.id) && event.target.files[0]) {
     const save = $('#save-recipe'); save.disabled = true; state.busy = true;
     try {editorPhoto = await compressPhoto(event.target.files[0]); if (editorPhotoUrl) URL.revokeObjectURL(editorPhotoUrl); editorPhotoUrl = URL.createObjectURL(editorPhoto); $('#editor-photo').src = editorPhotoUrl; $('#editor-photo').hidden = false; $('#remove-photo').hidden = false; $('#form-error').textContent = ''; removeImage = false; state.formDirty = true;}
     catch(error) {$('#form-error').textContent = readableError(error);} finally {state.busy = false; save.disabled = false;}
