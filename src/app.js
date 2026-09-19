@@ -168,7 +168,7 @@ async function shareRecipe(id) {
     try {await navigator.share({title: recipe.title, url: link}); return;}
     catch (error) {if (error.name === 'AbortError') return;}
   }
-  try {await navigator.clipboard.writeText(link); notify('Receptlänken är kopierad!');}
+  try {await navigator.clipboard.writeText(link);}
   catch {
     showModal(`${modalHead('Dela recept')}<label class="field">Kopiera länken<input readonly value="${esc(link)}" aria-label="Receptlänk"></label>`, 'share');
     $('input', modal).select();
