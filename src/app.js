@@ -63,13 +63,13 @@ function tagIcon(tag) { return ({Snabbt: 'bolt', Billigt: 'coins', Matlådevänl
 function renderFilters() {
   const firstTags = ['Snabbt', 'Billigt', 'Matlådevänligt'];
   const extraTags = state.selectedTags.filter(tag => !firstTags.includes(tag));
-  return `<div class="toolbar"><div class="controls"><label class="search">${icon('search')}<span class="sr-only">Sök recept på namn</span><input id="search" type="search" value="${esc(state.query)}" placeholder="Vad vill du laga?" autocomplete="off"></label>
+  return `<label class="search">${icon('search')}<span class="sr-only">Sök recept på namn</span><input id="search" type="search" value="${esc(state.query)}" placeholder="Vad vill du laga?" autocomplete="off"></label><hr class="recipe-divider"><div class="toolbar divided-toolbar"><div class="controls">
     <div class="filter-line"><div class="segment" aria-label="Filtrera på"><button data-action="mode" data-mode="all" class="${state.mode === 'all' ? 'active' : ''}" aria-pressed="${state.mode === 'all'}">Alla</button><button data-action="mode" data-mode="protein" class="${state.mode === 'protein' ? 'active' : ''}" aria-pressed="${state.mode === 'protein'}">Protein</button><button data-action="mode" data-mode="carb" class="${state.mode === 'carb' ? 'active' : ''}" aria-pressed="${state.mode === 'carb'}">Kolhydrat</button></div>
     ${state.mode !== 'all' ? `<label class="sr-only" for="category">Välj ${state.mode === 'protein' ? 'protein' : 'kolhydrat'}</label><select id="category"><option value="">${state.mode === 'protein' ? 'Alla proteiner' : 'Alla kolhydrater'}</option>${(state.mode === 'protein' ? PROTEINS : CARBS).map(item => `<option ${state.category === item ? 'selected' : ''}>${item}</option>`).join('')}</select>` : ''}</div>
     <div class="tag-line">${[...firstTags,...extraTags].map(tag => `<button class="chip ${state.selectedTags.includes(tag) ? 'active' : ''}" data-action="tag" data-tag="${esc(tag)}" aria-pressed="${state.selectedTags.includes(tag)}">${icon(tagIcon(tag))}${esc(tag)}</button>`).join('')}<button class="chip chip-more" data-action="tags">${icon('plus')} Fler taggar</button></div>
     ${state.selectedTags.length > 1 ? '<p class="small muted" style="margin-top:10px">Alla valda taggar måste stämma.</p>' : ''}
     ${state.selectedTags.length || state.category || state.query ? '<button class="plain clear-filters" data-action="clear">Rensa filter</button>' : ''}</div>
-    <div class="random-prompt"><p>Svårt att bestämma dig för vad du ska laga?</p><button class="primary random-button" data-action="random">${icon('shuffle')}Slumpa recept</button></div></div>`;
+    <div class="random-prompt"><p>Svårt att bestämma dig för vad du ska laga?</p><button class="primary random-button" data-action="random">${icon('shuffle')}Slumpa recept</button></div></div><hr class="recipe-divider">`;
 }
 function renderCollection() {
   const recipes = currentRecipes();
